@@ -2,7 +2,7 @@ package ru.yandex.javacource.brykalov.schedule.manager;
 
 public class Managers {
 
-    public HistoryManager getDefaultHistory() {
+    public static HistoryManager getDefaultHistory() {
         return new InMemoryHistoryManager();
     }
 

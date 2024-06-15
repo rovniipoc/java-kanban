@@ -7,49 +7,45 @@ import ru.yandex.javacource.brykalov.schedule.task.Task;
 import java.util.ArrayList;
 import java.util.List;
 
-public interface TaskManager {
-    public ArrayList<Task> getTaskList();
+interface TaskManager {
+    List<Task> getTaskList();
 
-    public ArrayList<Epic> getEpicList();
+    List<Epic> getEpicList();
 
-    public ArrayList<Subtask> getSubtaskList();
+    List<Subtask> getSubtaskList();
 
-    public void deleteAllTasks();
+    void deleteAllTasks();
 
-    public void deleteAllEpics();
+    void deleteAllEpics();
 
-    public void deleteAllSubtasks();
+    void deleteAllSubtasks();
 
-    public Task getTask(int id);
+    Task getTask(int id);
 
-    public Task getEpic(int id);
+    Task getEpic(int id);
 
-    public Task getSubtask(int id);
+    Task getSubtask(int id);
 
-    public int addNewTask(Task task);
+    int addNewTask(Task task);
 
-    public int addNewEpic(Epic epic);
+    int addNewEpic(Epic epic);
 
-    public Integer addNewSubtask(Subtask subtask);
+    Integer addNewSubtask(Subtask subtask);
 
-    public void updateTask(Task task);
+    void updateTask(Task task);
 
-    public void updateEpic(Epic epic);
+    void updateEpic(Epic epic);
 
-    public void updateSubtask(Subtask subtask);
+    void updateSubtask(Subtask subtask);
 
-    public void deleteTaskById(int id);
+    void deleteTaskById(int id);
 
-    public void deleteEpicById(int id);
+    void deleteEpicById(int id);
 
-    public void deleteSubtaskById(int id);
+    void deleteSubtaskById(int id);
 
-    public ArrayList<Subtask> getSubtasksFromEpicById(int id);
+    List<Subtask> getSubtasksFromEpicById(int id);
 
-    public void updateEpicStatus(int epicId);
-
-    public ArrayList<Task> getHistory();
-
-    public void updateHistory(Task task);
+    List<Task> getHistory();
 
 }

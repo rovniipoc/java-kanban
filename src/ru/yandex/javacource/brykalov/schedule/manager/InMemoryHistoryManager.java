@@ -3,20 +3,25 @@ package ru.yandex.javacource.brykalov.schedule.manager;
 import ru.yandex.javacource.brykalov.schedule.task.Task;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class InMemoryHistoryManager implements HistoryManager {
-    ArrayList<Task> historyObjectList = new ArrayList<>(10);
+    public static final int MAX_SIZE = 10;
+    private final List<Task> history = new ArrayList<>(MAX_SIZE);
 
     @Override
     public void add(Task task) {
-        if (historyObjectList.size() == 10) {
-            historyObjectList.removeFirst();
+        if (task == null) {
+            return;
         }
-        historyObjectList.add(task);
+        if (history.size() == MAX_SIZE) {
+            history.removeFirst();
+        }
+        history.add(task);
     }
 
     @Override
-    public ArrayList<Task> getHistory() {
-        return historyObjectList;
+    public List<Task> getHistory() {
+        return history;
     }
 }
