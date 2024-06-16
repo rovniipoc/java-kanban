@@ -145,7 +145,7 @@ public class InMemoryTaskManager implements TaskManager {
 
     @Override
     public void deleteEpicById(int id) {
-        ArrayList<Integer> subtaskIds = epics.get(id).getSubtaskIds();
+        List<Integer> subtaskIds = epics.get(id).getSubtaskIds();
         for (Integer subtaskId : subtaskIds) {
             subtasks.remove(subtaskId);
         }
@@ -182,7 +182,7 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     private void updateEpicStatus(int epicId) {
-        ArrayList<Integer> subtaskIds = epics.get(epicId).getSubtaskIds();
+        List<Integer> subtaskIds = epics.get(epicId).getSubtaskIds();
         int numberOfNewTask = 0;
         int numberOfCompletedTask = 0;
 
