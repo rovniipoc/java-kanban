@@ -5,8 +5,6 @@ import ru.yandex.javacource.brykalov.schedule.task.Task;
 import java.util.*;
 
 public class InMemoryHistoryManager implements HistoryManager {
-    //public static final int MAX_SIZE = 10;
-    //private final List<Task> history = new ArrayList<>(MAX_SIZE);
     private final CustomLinkedList<Task> historyList = new CustomLinkedList<>();
     private final Map<Integer, Node<Task>> historyMap = new HashMap<>();
 

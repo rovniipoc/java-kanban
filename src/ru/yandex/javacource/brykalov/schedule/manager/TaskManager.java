@@ -4,7 +4,6 @@ import ru.yandex.javacource.brykalov.schedule.task.Epic;
 import ru.yandex.javacource.brykalov.schedule.task.Subtask;
 import ru.yandex.javacource.brykalov.schedule.task.Task;
 
-import java.util.ArrayList;
 import java.util.List;
 
 interface TaskManager {
