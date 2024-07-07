@@ -84,7 +84,7 @@ public class InMemoryTaskManagerTest {
 
     @Test
     void addAndReadHistory() {
-        // проверка работы истории, в т.ч. проверка что при изменении задачи в хранилище
+        // Проверка работы истории, в т.ч. проверка, что при изменении задачи в хранилище
         // в истории остается неизмененная версия задачи
         Task task = new Task("Задача", "Описание задачи", Status.NEW);
         int taskId = inMemoryTaskManager.addNewTask(task);
@@ -95,59 +95,53 @@ public class InMemoryTaskManagerTest {
         Subtask subtask = new Subtask("Подзадача", "Описание подзадачи", epicId, Status.NEW);
         int subtaskId = inMemoryTaskManager.addNewSubtask(subtask);
 
-        // всего в проверке 11 методов .get...(), это сделано для проверки "перезаписываемости" истории
-        // по достижению 10+ просмотренных объектов.
-        // Это первый метод getTask, поэтому он не должен попасть в историю,
-        // т.к. после него еще 10 подобных "просмотров"
-        inMemoryTaskManager.getTask(taskId);
-
-        // создаем и наполняем "проверочный список". В список вносим последние 10 "просмотренных"
-        // с помощь get...() объекты
+        // Создаем и наполняем "проверочный список". В список вносим только уникальные последние "просмотренные"
+        // с помощью get...() объекты
         List<Task> tasks = new ArrayList<>();
-        tasks.add(inMemoryTaskManager.getSubtask(subtaskId));
-        tasks.add(inMemoryTaskManager.getSubtask(subtaskId));
-        tasks.add(inMemoryTaskManager.getEpic(epicId));
-        tasks.add(inMemoryTaskManager.getEpic(epicId));
-        tasks.add(inMemoryTaskManager.getEpic(epicId));
-        tasks.add(inMemoryTaskManager.getSubtask(subtaskId));
+        inMemoryTaskManager.getSubtask(subtaskId);
+        inMemoryTaskManager.getSubtask(subtaskId);
+        inMemoryTaskManager.getEpic(epicId);
+        inMemoryTaskManager.getEpic(epicId);
+        inMemoryTaskManager.getEpic(epicId);
+        inMemoryTaskManager.getTask(taskId);
         tasks.add(inMemoryTaskManager.getTask(taskId));
-        tasks.add(inMemoryTaskManager.getTask(taskId));
+        inMemoryTaskManager.getSubtask(subtaskId);
         tasks.add(inMemoryTaskManager.getEpic(epicId));
         tasks.add(inMemoryTaskManager.getSubtask(subtaskId));
 
-        // выполняем проверку на "перезаписываемость" 10 элементов в истории
+        // выполняем проверку
         List<Task> history = inMemoryTaskManager.getHistory();
         assertArrayEquals(new ArrayList[]{(ArrayList) tasks}, new ArrayList[]{(ArrayList) history},
                 "История сохраняется неверно.");
 
-        // модифицируем задачи и добавляем замещаем ими соответствующие задачи в проверочном листе
-        // Т.о. сравнив задачу из истории и из проверочного списка, поймем сохраняется
+        // Модифицируем задачи и замещаем ими соответствующие задачи в проверочном листе
+        // Т.о. сравнив задачу из истории и из проверочного списка, поймем, сохраняется
         // ли в истории "старый" объект или тоже модифицируется. Повторяем это для Epic и Subtask.
         Task modifedTask = new Task("Мод.Задача", "Описание мод.задачи", Status.NEW);
         modifedTask.setId(taskId);
         inMemoryTaskManager.updateTask(modifedTask);
-        tasks.set(7, modifedTask);
+        tasks.set(0, modifedTask);
 
         Epic modifedEpic = new Epic("Мод.Эпик", "Описание мод.эпика");
         modifedEpic.setId(epicId);
         inMemoryTaskManager.updateEpic(modifedEpic);
-        tasks.set(8, modifedEpic);
+        tasks.set(1, modifedEpic);
 
         Subtask modifedSubtask = new Subtask("Мод.подзадача", "Описание мод.подзадачи", epicId, Status.NEW);
         modifedSubtask.setId(subtaskId);
         inMemoryTaskManager.updateSubtask(modifedSubtask);
-        tasks.set(9, modifedSubtask);
+        tasks.set(2, modifedSubtask);
 
         history = inMemoryTaskManager.getHistory();
 
         // проверяем, что после изменения задач те же задачи не изменились в истории
-        assertNotEquals(history.get(7), tasks.get(7), "В истории должны храниться задачи" +
+        assertNotEquals(history.get(0), tasks.get(0), "В истории должны храниться задачи" +
                 " в том состоянии, в котором они были в момент" +
                 " добавления в историю. Task после update изменился и в истории тоже");
-        assertNotEquals(history.get(8), tasks.get(8), "В истории должны храниться задачи" +
+        assertNotEquals(history.get(1), tasks.get(1), "В истории должны храниться задачи" +
                 " в том состоянии, в котором они были в момент" +
                 " добавления в историю. Epic после update изменился и в истории тоже");
-        assertNotEquals(history.get(9), tasks.get(9), "В истории должны храниться задачи" +
+        assertNotEquals(history.get(2), tasks.get(2), "В истории должны храниться задачи" +
                 " в том состоянии, в котором они были в момент" +
                 " добавления в историю. Subtask после update изменился и в истории тоже");
     }
