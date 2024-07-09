@@ -15,23 +15,18 @@ public class InMemoryHistoryManager implements HistoryManager {
         }
 
         int taskId = task.getId();
-
-        if (historyMap.containsKey(taskId)) {
-            Node<Task> unlinkTaskNode = historyMap.get(taskId);
-            removeNode(unlinkTaskNode);
-        }
+        remove(taskId);
 
         historyMap.put(task.getId(), historyList.linkLast(task));
-
     }
 
     @Override
     public void remove(int id) {
-        if (historyMap.get(id) == null) {
+        final Node node = historyMap.remove(id);
+        if (node == null) {
             return;
         }
-        removeNode(historyMap.get(id));
-        historyMap.remove(id);
+        removeNode(node);
     }
 
     public void removeNode(Node<Task> node) {
@@ -43,15 +38,15 @@ public class InMemoryHistoryManager implements HistoryManager {
         return historyList.getTasks();
     }
 
-    public static class CustomLinkedList<T> {
-        private Node<T> head;
-        private Node<T> tail;
+    public static class CustomLinkedList<Task> {
+        private Node<Task> head;
+        private Node<Task> tail;
         private int size = 0;
 
-        public T unlink(Node<T> node) {
-            final T data = node.data;
-            final Node<T> next = node.next;
-            final Node<T> prev = node.prev;
+        public Task unlink(Node<Task> node) {
+            final Task data = node.data;
+            final Node<Task> next = node.next;
+            final Node<Task> prev = node.prev;
 
             if (prev == null) {
                 head = next;
@@ -73,9 +68,9 @@ public class InMemoryHistoryManager implements HistoryManager {
             return data;
         }
 
-        public Node<T> linkLast(T element) {
-            final Node<T> oldTail = tail;
-            final Node<T> newNode = new Node<>(oldTail, element, null);
+        public Node<Task> linkLast(Task element) {
+            final Node<Task> oldTail = tail;
+            final Node<Task> newNode = new Node<>(oldTail, element, null);
             tail = newNode;
             if (oldTail == null) {
                 head = newNode;
@@ -87,10 +82,10 @@ public class InMemoryHistoryManager implements HistoryManager {
             return newNode;
         }
 
-        public List<T> getTasks() {
-            List<T> result = new ArrayList<>();
+        public List<Task> getTasks() {
+            List<Task> result = new ArrayList<>();
 
-            for (Node<T> node = head; node != null; node = node.next) {
+            for (Node<Task> node = head; node != null; node = node.next) {
                 result.add(node.data);
             }
 
