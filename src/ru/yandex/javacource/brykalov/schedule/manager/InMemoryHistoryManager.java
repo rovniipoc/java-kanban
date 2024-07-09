@@ -22,7 +22,7 @@ public class InMemoryHistoryManager implements HistoryManager {
 
     @Override
     public void remove(int id) {
-        final Node node = historyMap.remove(id);
+        final Node<Task> node = historyMap.remove(id);
         if (node == null) {
             return;
         }
