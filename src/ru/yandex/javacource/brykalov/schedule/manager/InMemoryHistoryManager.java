@@ -5,7 +5,7 @@ import ru.yandex.javacource.brykalov.schedule.task.Task;
 import java.util.*;
 
 public class InMemoryHistoryManager implements HistoryManager {
-    private final CustomLinkedList<Task> historyList = new CustomLinkedList<>();
+    private final CustomLinkedList historyList = new CustomLinkedList();
     private final Map<Integer, Node<Task>> historyMap = new HashMap<>();
 
     @Override
@@ -38,7 +38,7 @@ public class InMemoryHistoryManager implements HistoryManager {
         return historyList.getTasks();
     }
 
-    public static class CustomLinkedList<Task> {
+    public static class CustomLinkedList {
         private Node<Task> head;
         private Node<Task> tail;
         private int size = 0;
