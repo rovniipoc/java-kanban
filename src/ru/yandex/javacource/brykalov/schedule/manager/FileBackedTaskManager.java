@@ -16,7 +16,7 @@ import java.util.*;
 
 public class FileBackedTaskManager extends InMemoryTaskManager {
 
-    File file = null;
+    File file;
 
     public FileBackedTaskManager(File file) throws IOException {
         this.file = file;
@@ -25,7 +25,7 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
             Files.createFile(Path.of(file.toURI()));
         }
 
-        readSaveFile(file);
+        loadFromFile(file);
     }
 
     public void save() {
@@ -38,13 +38,10 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
         allTasksForSave.addAll(epicsForSave);
         allTasksForSave.addAll(subtasksForSave);
 
-        Comparator<String> comparator = new Comparator<String>() {
-            @Override
-            public int compare(String o1, String o2) {
-                int id1 = Integer.parseInt(o1.substring(0, o1.indexOf(",")));
-                int id2 = Integer.parseInt(o2.substring(0, o2.indexOf(",")));
-                return id1 - id2;
-            }
+        Comparator<String> comparator = (o1, o2) -> {
+            int id1 = Integer.parseInt(o1.substring(0, o1.indexOf(",")));
+            int id2 = Integer.parseInt(o2.substring(0, o2.indexOf(",")));
+            return id1 - id2;
         };
 
         allTasksForSave.sort(comparator);
@@ -77,7 +74,7 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
         List<String> epicsForSave = new ArrayList<>();
 
         for (Map.Entry<Integer, Epic> entry : epics.entrySet()) {
-            StringBuilder epicSubtasks = new StringBuilder("");
+            StringBuilder epicSubtasks = new StringBuilder();
             for (Integer subtaskId : entry.getValue().getSubtaskIds()) {
                 epicSubtasks.append(subtaskId).append(" ");
             }
@@ -88,7 +85,7 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
                     entry.getValue().getName(),
                     entry.getValue().getStatus(),
                     entry.getValue().getDescription(),
-                    epicSubtasks.toString()));
+                    epicSubtasks));
         }
         return epicsForSave;
     }
@@ -108,8 +105,8 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
         return subtasksForSave;
     }
 
-    public void readSaveFile(File file) throws IOException {
-        List<String> savedList = new ArrayList<>(Files.readAllLines(this.file.toPath()));
+    public void loadFromFile(File file) throws IOException {
+        List<String> savedList = new ArrayList<>(Files.readAllLines(file.toPath()));
 
         // Считываем строки из файла в List (в файле строки заранее отсортированы по id), парсим на параметры задач,
         // создаем задачи в том же порядке, в котором они создавались ранее (для того, чтобы id задач остались прежними)
