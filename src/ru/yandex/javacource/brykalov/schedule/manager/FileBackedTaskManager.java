@@ -1,6 +1,7 @@
 package ru.yandex.javacource.brykalov.schedule.manager;
 
 import ru.yandex.javacource.brykalov.schedule.task.Epic;
+import ru.yandex.javacource.brykalov.schedule.task.Status;
 import ru.yandex.javacource.brykalov.schedule.task.Subtask;
 import ru.yandex.javacource.brykalov.schedule.task.Task;
 
@@ -10,17 +11,21 @@ import java.io.IOException;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.nio.file.Path;
+import java.util.*;
 
 public class FileBackedTaskManager extends InMemoryTaskManager {
 
     File file = null;
 
-    public FileBackedTaskManager(File file) {
+    public FileBackedTaskManager(File file) throws IOException {
         this.file = file;
-        //Files.createFile(Path.of(file.toURI()));
+
+        if (!file.exists()) {
+            Files.createFile(Path.of(file.toURI()));
+        }
+
+        readSaveFile(file);
     }
 
     public void save() {
@@ -28,15 +33,25 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
         List<String> epicsForSave = allEpicsToString();
         List<String> subtasksForSave = allSubtasksToString();
 
+        List<String> allTasksForSave = new ArrayList<>();
+        allTasksForSave.addAll(tasksForSave);
+        allTasksForSave.addAll(epicsForSave);
+        allTasksForSave.addAll(subtasksForSave);
+
+        Comparator<String> comparator = new Comparator<String>() {
+            @Override
+            public int compare(String o1, String o2) {
+                int id1 = Integer.parseInt(o1.substring(0, o1.indexOf(",")));
+                int id2 = Integer.parseInt(o2.substring(0, o2.indexOf(",")));
+                return id1 - id2;
+            }
+        };
+
+        allTasksForSave.sort(comparator);
+
         try (Writer fw = new FileWriter(file, StandardCharsets.UTF_8)) {
             fw.write("id,type,name,status,description,epicId_or_subtasks\n");
-            for (String str : tasksForSave) {
-                fw.write(str);
-            }
-            for (String str : epicsForSave) {
-                fw.write(str);
-            }
-            for (String str : subtasksForSave) {
+            for (String str : allTasksForSave) {
                 fw.write(str);
             }
         } catch (IOException e) {
@@ -93,8 +108,52 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
         return subtasksForSave;
     }
 
-    public void read() throws IOException {
-        System.out.println(Files.readString(file.toPath()));
+    public void readSaveFile(File file) throws IOException {
+        List<String> savedList = new ArrayList<>(Files.readAllLines(this.file.toPath()));
+
+        // Считываем строки из файла в List (в файле строки заранее отсортированы по id), парсим на параметры задач,
+        // создаем задачи в том же порядке, в котором они создавались ранее (для того, чтобы id задач остались прежними)
+
+        for (String str : savedList) {
+            String[] taskParams = str.split(",");
+
+            // Отбрасываем первую строку с заголовками
+            if (Objects.equals(taskParams[0], "id")) {
+                continue;
+            }
+
+            Integer id = Integer.valueOf(taskParams[0]);
+            TaskType type = TaskType.valueOf(taskParams[1]);
+            String name = taskParams[2];
+            Status status = Status.valueOf(taskParams[3]);
+            String description = taskParams[4];
+            int epicId = 0;
+            String[] subtasks;
+
+            if (type == TaskType.SUBTASK) {
+                epicId = Integer.parseInt(taskParams[5]);
+            }
+            if (type == TaskType.EPIC) {
+                if (taskParams.length == 6) {
+                    subtasks = taskParams[5].split(" ");
+                }
+            }
+
+            switch (type) {
+                case TASK: {
+                    addNewTask(new Task(name, description, status));
+                    break;
+                }
+                case EPIC: {
+                    addNewEpic(new Epic(name, description));
+                    break;
+                }
+                case SUBTASK: {
+                    addNewSubtask(new Subtask(name, description, epicId, status));
+                    break;
+                }
+            }
+        }
     }
 
     public static class ManagerSaveException extends Error {
