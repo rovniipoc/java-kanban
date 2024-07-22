@@ -4,15 +4,14 @@ import ru.yandex.javacource.brykalov.schedule.manager.FileBackedTaskManager;
 import ru.yandex.javacource.brykalov.schedule.task.*;
 
 import java.io.File;
-import java.io.IOException;
 
 public class Main {
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         // Пользовательский сценарий
 
         // Создаем менеджер №1 и файл сохранения
-        File file = new File("src/ru/yandex/javacource/brykalov/schedule/save/file.csv");
+        File file = new File("resources/file.csv");
         FileBackedTaskManager fileBackedTaskManager1 = new FileBackedTaskManager(file);
 
         // Создаем задачи разных типов в менеджере №1:

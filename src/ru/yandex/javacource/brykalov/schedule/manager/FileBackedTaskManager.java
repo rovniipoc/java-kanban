@@ -1,14 +1,8 @@
 package ru.yandex.javacource.brykalov.schedule.manager;
 
-import ru.yandex.javacource.brykalov.schedule.task.Epic;
-import ru.yandex.javacource.brykalov.schedule.task.Status;
-import ru.yandex.javacource.brykalov.schedule.task.Subtask;
-import ru.yandex.javacource.brykalov.schedule.task.Task;
+import ru.yandex.javacource.brykalov.schedule.task.*;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.Writer;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -16,146 +10,146 @@ import java.util.*;
 
 public class FileBackedTaskManager extends InMemoryTaskManager {
 
-    File file;
+    private final File file;
+    private static final String HEADERS = "id,type,name,status,description";
 
-    public FileBackedTaskManager(File file) throws IOException {
+    public FileBackedTaskManager(File file) {
         this.file = file;
 
         if (!file.exists()) {
-            Files.createFile(Path.of(file.toURI()));
+            try {
+                Files.createFile(Path.of(file.toURI()));
+            } catch (IOException e) {
+                throw new ManagerSaveException("Ошибка создания файла: " + file.getName());
+            }
         }
 
         loadFromFile(file);
     }
 
     public void save() {
-        List<String> tasksForSave = allTasksToString();
-        List<String> epicsForSave = allEpicsToString();
-        List<String> subtasksForSave = allSubtasksToString();
 
-        List<String> allTasksForSave = new ArrayList<>();
-        allTasksForSave.addAll(tasksForSave);
-        allTasksForSave.addAll(epicsForSave);
-        allTasksForSave.addAll(subtasksForSave);
+        try (BufferedWriter fw = new BufferedWriter(new FileWriter(file, StandardCharsets.UTF_8))) {
+            fw.write(HEADERS);
+            fw.newLine();
 
-        Comparator<String> comparator = (o1, o2) -> {
-            int id1 = Integer.parseInt(o1.substring(0, o1.indexOf(",")));
-            int id2 = Integer.parseInt(o2.substring(0, o2.indexOf(",")));
-            return id1 - id2;
-        };
-
-        allTasksForSave.sort(comparator);
-
-        try (Writer fw = new FileWriter(file, StandardCharsets.UTF_8)) {
-            fw.write("id,type,name,status,description,epicId_or_subtasks\n");
-            for (String str : allTasksForSave) {
-                fw.write(str);
+            for (Task task : tasks.values()) {
+                fw.write(taskToString(task));
+                fw.newLine();
             }
+            for (Task epic : epics.values()) {
+                fw.write(taskToString(epic));
+                fw.newLine();
+            }
+            for (Task subtask : subtasks.values()) {
+                fw.write(taskToString(subtask));
+                fw.newLine();
+            }
+
         } catch (IOException e) {
-            throw new ManagerSaveException("Ошибка создания файла.");
+            throw new ManagerSaveException("Ошибка сохранения в файл: " + file.getName());
         }
     }
 
-    public List<String> allTasksToString() {
-        List<String> tasksForSave = new ArrayList<>();
-
-        for (Map.Entry<Integer, Task> entry : tasks.entrySet()) {
-            tasksForSave.add(String.format("%s,%s,%s,%s,%s\n",
-                    entry.getKey(),
-                    TaskType.TASK,
-                    entry.getValue().getName(),
-                    entry.getValue().getStatus(),
-                    entry.getValue().getDescription()));
-        }
-        return tasksForSave;
+    public String taskToString(Task task) {
+        return task.getId() + ","
+                + task.getType() + ","
+                + task.getName() + ","
+                + task.getStatus() + ","
+                + task.getDescription() + ","
+                + (task.getType().equals(TaskType.SUBTASK) ? ((Subtask) task).getEpicId() : "");
     }
 
-    public List<String> allEpicsToString() {
-        List<String> epicsForSave = new ArrayList<>();
+    public Task taskFromString(String str) {
+        String[] taskParams = str.split(",");
 
-        for (Map.Entry<Integer, Epic> entry : epics.entrySet()) {
-            StringBuilder epicSubtasks = new StringBuilder();
-            for (Integer subtaskId : entry.getValue().getSubtaskIds()) {
-                epicSubtasks.append(subtaskId).append(" ");
-            }
+        int id = Integer.parseInt(taskParams[0]);
+        TaskType type = TaskType.valueOf(taskParams[1]);
+        String name = taskParams[2];
+        Status status = Status.valueOf(taskParams[3]);
+        String description = taskParams[4];
+        int epicId = 0;
+        List<Integer> subtasks = null;
 
-            epicsForSave.add(String.format("%s,%s,%s,%s,%s,%s\n",
-                    entry.getKey(),
-                    TaskType.EPIC,
-                    entry.getValue().getName(),
-                    entry.getValue().getStatus(),
-                    entry.getValue().getDescription(),
-                    epicSubtasks));
+        if (type == TaskType.SUBTASK) {
+            epicId = Integer.parseInt(taskParams[5]);
         }
-        return epicsForSave;
-    }
-
-    public List<String> allSubtasksToString() {
-        List<String> subtasksForSave = new ArrayList<>();
-
-        for (Map.Entry<Integer, Subtask> entry : subtasks.entrySet()) {
-            subtasksForSave.add(String.format("%s,%s,%s,%s,%s,%s\n",
-                    entry.getKey(),
-                    TaskType.SUBTASK,
-                    entry.getValue().getName(),
-                    entry.getValue().getStatus(),
-                    entry.getValue().getDescription(),
-                    entry.getValue().getEpicId()));
-        }
-        return subtasksForSave;
-    }
-
-    public void loadFromFile(File file) throws IOException {
-        List<String> savedList = new ArrayList<>(Files.readAllLines(file.toPath()));
-
-        // Считываем строки из файла в List (в файле строки заранее отсортированы по id), парсим на параметры задач,
-        // создаем задачи в том же порядке, в котором они создавались ранее (для того, чтобы id задач остались прежними)
-
-        for (String str : savedList) {
-            String[] taskParams = str.split(",");
-
-            // Отбрасываем первую строку с заголовками
-            if (Objects.equals(taskParams[0], "id")) {
-                continue;
-            }
-
-            Integer id = Integer.valueOf(taskParams[0]);
-            TaskType type = TaskType.valueOf(taskParams[1]);
-            String name = taskParams[2];
-            Status status = Status.valueOf(taskParams[3]);
-            String description = taskParams[4];
-            int epicId = 0;
-            String[] subtasks;
-
-            if (type == TaskType.SUBTASK) {
-                epicId = Integer.parseInt(taskParams[5]);
-            }
-            if (type == TaskType.EPIC) {
-                if (taskParams.length == 6) {
-                    subtasks = taskParams[5].split(" ");
-                }
-            }
-
-            switch (type) {
-                case TASK: {
-                    addNewTask(new Task(name, description, status));
-                    break;
-                }
-                case EPIC: {
-                    addNewEpic(new Epic(name, description));
-                    break;
-                }
-                case SUBTASK: {
-                    addNewSubtask(new Subtask(name, description, epicId, status));
-                    break;
+        if (type == TaskType.EPIC) {
+            if (taskParams.length == 6) {
+                String[] strArr = taskParams[5].split(" ");
+                for (String string : strArr) {
+                    subtasks.add(Integer.parseInt(string));
                 }
             }
         }
+
+        switch (type) {
+            case TASK: {
+                Task task = new Task(name, description, status);
+                task.setId(id);
+                return task;
+            }
+            case EPIC: {
+                Epic epic = new Epic(name, description);
+                epic.setId(id);
+                epic.setStatus(status);
+                epic.setSubtaskIds(subtasks);
+                return epic;
+            }
+            case SUBTASK: {
+                Subtask subtask = new Subtask(name, description, epicId, status);
+                subtask.setId(id);
+                return subtask;
+            }
+        }
+
+        return null;
     }
 
-    public static class ManagerSaveException extends Error {
-        public ManagerSaveException(String message) {
-            super(message);
+    public void loadFromFile(File file) {
+        try {
+            // Считываем строки из файла в List<String>
+            final List<String> savedList = new ArrayList<>(Files.readAllLines(file.toPath()));
+            int tasksCounter = 0;
+
+            for (String str : savedList) {
+                // Отбрасываем первую строку с заголовками и пустые строки
+                if (str.equals(HEADERS) || str.isEmpty() || str.isBlank()) {
+                    continue;
+                }
+                // Создаем задачи из строк
+                Task task = taskFromString(str);
+                int taskId = task.getId();
+                if (taskId > tasksCounter) {
+                    tasksCounter = taskId;
+                }
+                // Добавляем задачи в Map
+                addAnyTask(task);
+            }
+
+            this.tasksCounter = tasksCounter;
+        } catch (IOException e) {
+            throw new ManagerSaveException("Ошибка чтения из файла: " + file.getName());
+        }
+    }
+
+    protected void addAnyTask(Task task) {
+        int id = task.getId();
+        TaskType type = task.getType();
+
+        switch (type) {
+            case TASK: {
+                tasks.put(id, task);
+                break;
+            }
+            case EPIC: {
+                epics.put(id, (Epic) task);
+                break;
+            }
+            case SUBTASK: {
+                subtasks.put(id, (Subtask) task);
+                break;
+            }
         }
     }
 
