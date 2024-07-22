@@ -8,6 +8,7 @@ public class Epic extends Task {
 
     public Epic(String name, String description) {
         super(name, description, Status.NEW);
+        this.type = TaskType.EPIC;
         this.name = name;
         this.description = description;
         this.status = Status.NEW;
@@ -36,7 +37,7 @@ public class Epic extends Task {
         this.subtaskIds = subtaskIds;
     }
 
-    public void setStatus(Status status) { //пришлось сделать публичным, иначе не было доступа для менеджера, который в соседнем пакете
+    public void setStatus(Status status) {
         this.status = status;
     }
 
