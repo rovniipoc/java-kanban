@@ -3,15 +3,21 @@ package ru.yandex.javacource.brykalov.schedule.task;
 import java.util.Objects;
 
 public class Task {
+    protected TaskType type;
     protected String name;
     protected String description;
     protected int id;
     protected Status status;
 
     public Task(String name, String description, Status status) {
+        this.type = TaskType.TASK;
         this.name = name;
         this.description = description;
         this.status = status;
+    }
+
+    public TaskType getType() {
+        return type;
     }
 
     public int getId() {
