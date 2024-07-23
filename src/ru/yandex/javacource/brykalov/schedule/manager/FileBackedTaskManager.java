@@ -10,8 +10,8 @@ import java.util.*;
 
 public class FileBackedTaskManager extends InMemoryTaskManager {
 
+    private static final String HEADERS = "id,type,name,status,description,epic";
     private final File file;
-    private static final String HEADERS = "id,type,name,status,description";
 
     public FileBackedTaskManager(File file) {
         this.file = file;
