@@ -5,17 +5,15 @@ import ru.yandex.javacource.brykalov.schedule.task.Status;
 import ru.yandex.javacource.brykalov.schedule.task.Subtask;
 import ru.yandex.javacource.brykalov.schedule.task.Task;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.*;
 
 public class InMemoryTaskManager implements TaskManager {
     protected final Map<Integer, Task> tasks = new HashMap<>();
     protected final Map<Integer, Epic> epics = new HashMap<>();
     protected final Map<Integer, Subtask> subtasks = new HashMap<>();
     protected int tasksCounter = 0;
-
     protected final HistoryManager historyManager = Managers.getDefaultHistory();
 
     @Override
@@ -31,6 +29,31 @@ public class InMemoryTaskManager implements TaskManager {
     @Override
     public List<Subtask> getSubtaskList() {
         return new ArrayList<>(subtasks.values());
+    }
+
+    @Override
+    public List<Task> getPrioritizedTasks() {
+        Comparator<Task> comparator = new Comparator<Task>() {
+            @Override
+            public int compare(Task o1, Task o2) {
+                return o1.getStartTime().get().compareTo(o2.getStartTime().get());
+            }
+        };
+
+        final Set<Task> prioritizedTasks = new TreeSet<>(comparator);
+
+        List<Task> tasksWithDuration = getTaskList().stream()
+                .filter(task -> task.getStartTime().isPresent())
+                .toList();
+
+        List<Subtask> subtasksWithDuration = getSubtaskList().stream()
+                .filter(subtask -> subtask.getStartTime().isPresent())
+                .toList();
+
+        prioritizedTasks.addAll(tasksWithDuration);
+        prioritizedTasks.addAll(subtasksWithDuration);
+
+        return prioritizedTasks.stream().toList();
     }
 
     @Override
@@ -70,6 +93,7 @@ public class InMemoryTaskManager implements TaskManager {
         for (Epic epic : epics.values()) {
             epic.clearSubtaskIds();
             updateEpicStatus(epic.getId());
+            updateEpicDuration(epic.getId());
         }
         subtasks.clear();
     }
@@ -123,6 +147,7 @@ public class InMemoryTaskManager implements TaskManager {
         subtasks.put(id, subtask);
         epic.addSubtaskId(subtask.getId());
         updateEpicStatus(epicId);
+        updateEpicDuration(epicId);
         return id;
     }
 
@@ -157,6 +182,7 @@ public class InMemoryTaskManager implements TaskManager {
         }
         subtasks.replace(subtask.getId(), subtask);
         updateEpicStatus(subtask.getEpicId());
+        updateEpicDuration(subtask.getEpicId());
     }
 
     @Override
@@ -185,6 +211,7 @@ public class InMemoryTaskManager implements TaskManager {
         Epic epic = epics.get(subtask.getEpicId());
         epic.removeSubtask(id);
         updateEpicStatus(epic.getId());
+        updateEpicDuration(epic.getId());
         historyManager.remove(id);
     }
 
@@ -226,6 +253,27 @@ public class InMemoryTaskManager implements TaskManager {
             epics.get(epicId).setStatus(Status.NEW);
         } else {
             epics.get(epicId).setStatus(Status.IN_PROGRESS);
+        }
+    }
+
+    private void updateEpicDuration(int epicId) {
+        final Epic epic = epics.get(epicId);
+        final List<Integer> subtaskIds = epic.getSubtaskIds();
+
+        Optional<LocalDateTime> maybeStartTime = subtaskIds.stream().map(subtasks::get)
+                .map(Task::getStartTime)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .min(LocalDateTime::compareTo);
+        Optional<LocalDateTime> maybeEndTime = subtaskIds.stream().map(subtasks::get)
+                .map(Task::getEndTime)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .max(LocalDateTime::compareTo);
+
+        if (maybeStartTime.isPresent() && maybeEndTime.isPresent()) {
+            epic.setStartTime(maybeStartTime.get());
+            epic.setDuration(Duration.between(maybeStartTime.get(), maybeEndTime.get()));
         }
     }
 }

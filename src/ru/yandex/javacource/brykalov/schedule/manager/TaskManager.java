@@ -13,6 +13,8 @@ interface TaskManager {
 
     List<Subtask> getSubtaskList();
 
+    List<Task> getPrioritizedTasks();
+
     void deleteAllTasks();
 
     void deleteAllEpics();

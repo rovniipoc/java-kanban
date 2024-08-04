@@ -1,5 +1,6 @@
 package ru.yandex.javacource.brykalov.schedule.task;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,8 +42,15 @@ public class Epic extends Task {
         this.status = status;
     }
 
+    public void setStartTime(LocalDateTime startTime) {
+        this.startTime = startTime;
+    }
+
     @Override
     public String toString() {
+        if (startTime != null && duration != null) {
+            return "{" + name + ", " + description + ", id=" + id + ", SubtasksId=" + subtaskIds + ", " + status + ", start/end/duration=" + startTime + "/" + getEndTime().get() + "/" + duration + "}";
+        }
         return "{" + name + ", " + description + ", id=" + id + ", SubtasksId=" + subtaskIds + ", " + status + "}";
     }
 }
