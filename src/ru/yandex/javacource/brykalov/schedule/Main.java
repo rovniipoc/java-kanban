@@ -49,7 +49,7 @@ public class Main {
 //        fileBackedTaskManager1.deleteAllEpics();
 //        fileBackedTaskManager1.deleteAllSubtasks();
 
-        // Создаем менеджер №1 и файл сохранения
+        // Создаем менеджер №1
         InMemoryTaskManager inMemoryTaskManager = new InMemoryTaskManager();
 
         // Создаем задачи разных типов в менеджере №1:

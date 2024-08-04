@@ -69,6 +69,22 @@ public class InMemoryTaskManager implements TaskManager {
         }
 
         tasks.clear();
+
+        // Я не понимаю зачем менять for-each на stream: кода не становится меньше и он становится более сложным
+        // для понимания...
+//        epics.values().stream()
+//                .map(Epic::getId)
+//                .peek(historyManager::remove);
+//
+//        subtasks.values().stream()
+//                .map(Subtask::getId)
+//                .peek(historyManager::remove);
+//
+//        tasks.values().stream()
+//                .map(Task::getId)
+//                .peek(historyManager::remove);
+//
+//        tasks.clear();
     }
 
     @Override

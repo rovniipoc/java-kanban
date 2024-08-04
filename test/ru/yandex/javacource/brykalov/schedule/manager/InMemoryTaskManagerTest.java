@@ -96,7 +96,7 @@ public class InMemoryTaskManagerTest {
         int subtaskId = inMemoryTaskManager.addNewSubtask(subtask);
 
         // Создаем и наполняем "проверочный список". В список вносим только уникальные последние "просмотренные"
-        // с помощью get...() объекты
+        // с помощью get...() объекты (проверка на отсутствие дубликатов в истории)
         List<Task> tasks = new ArrayList<>();
         inMemoryTaskManager.getSubtask(subtaskId);
         inMemoryTaskManager.getSubtask(subtaskId);
