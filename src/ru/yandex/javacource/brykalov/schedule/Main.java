@@ -60,7 +60,7 @@ public class Main {
         int epicId2 = inMemoryTaskManager.addNewEpic(epic2);
 
         Subtask subtask1 = new Subtask("Подзадача1", "Описание подзадачи1", epicId2, Status.NEW,
-                LocalDateTime.of(2024, 8, 4, 15, 0),
+                LocalDateTime.of(2024, 8, 4, 0, 0),
                 Duration.ofMinutes(360));
         int subtaskId1 = inMemoryTaskManager.addNewSubtask(subtask1);
 
@@ -68,7 +68,7 @@ public class Main {
         int subtaskId2 = inMemoryTaskManager.addNewSubtask(subtask2);
 
         Subtask subtask3 = new Subtask("Подзадача3", "Описание подзадачи3", epicId2, Status.NEW,
-                LocalDateTime.of(2024, 8, 4, 18, 0),
+                LocalDateTime.of(2024, 8, 4, 2, 0),
                 Duration.ofMinutes(300));
         int subtaskId3 = inMemoryTaskManager.addNewSubtask(subtask3);
 
