@@ -34,8 +34,9 @@ public class Subtask extends Task {
 
     @Override
     public String toString() {
-        if (startTime != null && duration != null) {
-            return "{" + name + ", " + description + ", id=" + id + ", epicId=" + epicId + ", " + status + ", start/end/duration=" + startTime + "/" + getEndTime().get() + "/" + duration + "}";
+        if (startTime != null && duration != null && getEndTime().isPresent()) {
+            return "{" + name + ", " + description + ", id=" + id + ", epicId=" + epicId + ", " + status
+                    + ", start/end/duration=" + startTime + "/" + getEndTime().get() + "/" + duration + "}";
         }
         return "{" + name + ", " + description + ", id=" + id + ", epicId=" + epicId + ", " + status + "}";
     }

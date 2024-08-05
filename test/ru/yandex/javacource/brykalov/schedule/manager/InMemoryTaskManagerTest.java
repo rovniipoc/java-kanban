@@ -316,4 +316,11 @@ public class InMemoryTaskManagerTest {
 
         assertEquals(NEW, inMemoryTaskManager.getEpic(epicId).getStatus());
     }
+
+    @Test
+    void tasksOverlapTest() {
+        //TODO
+    }
+
+    //TODO Тесты задач с новыми полями (время начала, продолжительность)
 }

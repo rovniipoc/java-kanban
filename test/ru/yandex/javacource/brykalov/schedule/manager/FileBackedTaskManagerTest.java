@@ -19,6 +19,8 @@ public class FileBackedTaskManagerTest {
     void writeAndReadSaveFile() throws IOException {
         // Тест на сохранение и загрузку нескольких задач разных типов.
 
+        //TODO добавить проверку чтения и записи новых полей задач (время начала, продолжительность)
+
         // Создаем менеджер №1 и файл сохранения
         File tempFile = File.createTempFile("temp", ".csv");
         FileBackedTaskManager fileBackedTaskManager1 = new FileBackedTaskManager(tempFile);
@@ -106,4 +108,6 @@ public class FileBackedTaskManagerTest {
                 "Подзадачи сохраняются/считываются неверно.");
 
     }
+
+    //TODO тесты на корректный перехват исключений при работе с файлами
 }

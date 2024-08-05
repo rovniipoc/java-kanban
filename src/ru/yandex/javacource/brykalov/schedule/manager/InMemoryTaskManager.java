@@ -71,7 +71,7 @@ public class InMemoryTaskManager implements TaskManager {
         tasks.clear();
 
         // Я не понимаю зачем менять for-each на stream: кода не становится меньше и он становится более сложным
-        // для понимания...
+        // для понимания как мне кажется...
 //        epics.values().stream()
 //                .map(Epic::getId)
 //                .peek(historyManager::remove);
@@ -326,13 +326,7 @@ public class InMemoryTaskManager implements TaskManager {
         LocalDateTime start2 = task2.getStartTime().get();
         LocalDateTime end2 = task2.getEndTime().get();
 
-        if (
-                (start1.isAfter(start2) && start1.isBefore(end2)) || (end1.isAfter(start2) && end1.isBefore(end2))
-                        || (start2.isAfter(start1) && start2.isBefore(end1)) || (end2.isAfter(start1) && end2.isBefore(end1))
-        ) {
-            return true;
-        }
-
-        return false;
+        return (start1.isAfter(start2) && start1.isBefore(end2)) || (end1.isAfter(start2) && end1.isBefore(end2))
+                || (start2.isAfter(start1) && start2.isBefore(end1)) || (end2.isAfter(start1) && end2.isBefore(end1));
     }
 }

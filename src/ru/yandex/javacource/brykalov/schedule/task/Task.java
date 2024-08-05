@@ -104,7 +104,7 @@ public class Task {
 
     @Override
     public String toString() {
-        if (startTime != null && duration != null) {
+        if (startTime != null && duration != null && getEndTime().isPresent()) {
             return "{" + name + ", " + description + ", id=" + id + ", " + status + ", start/end/duration=" + startTime + "/" + getEndTime().get() + "/" + duration + "}";
         }
         return "{" + name + ", " + description + ", id=" + id + ", " + status + "}";
