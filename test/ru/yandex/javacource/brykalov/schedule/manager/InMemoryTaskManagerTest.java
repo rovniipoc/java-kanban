@@ -80,7 +80,7 @@ public class InMemoryTaskManagerTest {
         String nameSubtask = "Подзадача";
         String descriptionSubtask = "Описание подзадачи";
         Status statusSubtask = NEW;
-        LocalDateTime startTimeSubtask = LocalDateTime.of(1, 1, 1, 1, 1);
+        LocalDateTime startTimeSubtask = LocalDateTime.of(2, 1, 1, 1, 1);
         Duration durationSubtask = Duration.ofMinutes(1);
         Subtask subtask = new Subtask(nameSubtask, descriptionSubtask, epicId, statusSubtask, startTimeSubtask, durationSubtask);
         int subtaskId = inMemoryTaskManager.addNewSubtask(subtask);
