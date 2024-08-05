@@ -13,6 +13,7 @@ public class InMemoryTaskManager implements TaskManager {
     protected final Map<Integer, Task> tasks = new HashMap<>();
     protected final Map<Integer, Epic> epics = new HashMap<>();
     protected final Map<Integer, Subtask> subtasks = new HashMap<>();
+    protected final Set<Task> prioritizedTasks = new TreeSet<>(Comparator.comparing(Task::getStartTime));
     protected int tasksCounter = 0;
     protected final HistoryManager historyManager = Managers.getDefaultHistory();
 
@@ -33,54 +34,23 @@ public class InMemoryTaskManager implements TaskManager {
 
     @Override
     public List<Task> getPrioritizedTasks() {
-        Comparator<Task> comparator = new Comparator<Task>() {
-            @Override
-            public int compare(Task o1, Task o2) {
-                return o1.getStartTime().compareTo(o2.getStartTime());
-            }
-        };
-
-        final Set<Task> prioritizedTasks = new TreeSet<>(comparator);
-
-        List<Task> tasksWithDuration = getTaskList().stream()
-                .filter(task -> task.getStartTime() != null)
-                .toList();
-
-        List<Subtask> subtasksWithDuration = getSubtaskList().stream()
-                .filter(subtask -> subtask.getStartTime() != null)
-                .toList();
-
-        prioritizedTasks.addAll(tasksWithDuration);
-        prioritizedTasks.addAll(subtasksWithDuration);
-
         return prioritizedTasks.stream().toList();
     }
 
     @Override
     public void deleteAllTasks() {
-        for (Epic epic : epics.values()) {
-            historyManager.remove(epic.getId());
-        }
-        for (Subtask subtask : subtasks.values()) {
-            historyManager.remove(subtask.getId());
-        }
         for (Task task : tasks.values()) {
             historyManager.remove(task.getId());
+            prioritizedTasks.remove(task);
         }
 
         tasks.clear();
 
-        // Я не понимаю зачем менять for-each на stream: кода не становится меньше и он становится более сложным
-        // для понимания как мне кажется...
-//        epics.values().stream()
-//                .map(Epic::getId)
-//                .peek(historyManager::remove);
-//
-//        subtasks.values().stream()
-//                .map(Subtask::getId)
-//                .peek(historyManager::remove);
+        // Я не понимаю зачем менять for-each на stream: кода не становится меньше
+        // и он становится более сложным для понимания как мне кажется...
 //
 //        tasks.values().stream()
+//                .peek(prioritizedTasks::remove)
 //                .map(Task::getId)
 //                .peek(historyManager::remove);
 //
@@ -94,6 +64,7 @@ public class InMemoryTaskManager implements TaskManager {
         }
         for (Subtask subtask : subtasks.values()) {
             historyManager.remove(subtask.getId());
+            prioritizedTasks.remove(subtask);
         }
 
         epics.clear();
@@ -104,13 +75,14 @@ public class InMemoryTaskManager implements TaskManager {
     public void deleteAllSubtasks() {
         for (Subtask subtask : subtasks.values()) {
             historyManager.remove(subtask.getId());
+            prioritizedTasks.remove(subtask);
         }
-
         for (Epic epic : epics.values()) {
             epic.clearSubtaskIds();
             updateEpicStatus(epic.getId());
             updateEpicDuration(epic.getId());
         }
+
         subtasks.clear();
     }
 
@@ -137,15 +109,22 @@ public class InMemoryTaskManager implements TaskManager {
 
     @Override
     public int addNewTask(Task task) {
-        // Проверяем не пересекается ли по времени задача с другой задачей или подзадачей. Если пересекается, то задачу отбрасываем.
+        // Проверяем не пересекается ли по времени задача с другой задачей или подзадачей.
+        // Если пересекается, то задачу отбрасываем.
         if (getPrioritizedTasks().stream()
                 .anyMatch(taskFromStream -> isOverlap(taskFromStream, task))) {
             return -1;
+        }
+        // Проверяем имеет ли задача временной интервал.
+        // Если да, то добавляем в коллекцию задач, отсортированных по приоритету.
+        if (task.getStartTime() != null) {
+            prioritizedTasks.add(task);
         }
 
         int id = ++tasksCounter;
         task.setId(id);
         tasks.put(id, task);
+
         return id;
     }
 
@@ -159,10 +138,16 @@ public class InMemoryTaskManager implements TaskManager {
 
     @Override
     public Integer addNewSubtask(Subtask subtask) {
-        // Проверяем не пересекается ли по времени подзадача с другой задачей или подзадачей. Если пересекается, то подзадачу отбрасываем.
+        // Проверяем не пересекается ли по времени подзадача с другой задачей или подзадачей.
+        // Если пересекается, то подзадачу отбрасываем.
         if (getPrioritizedTasks().stream()
                 .anyMatch(taskFromStream -> isOverlap(taskFromStream, subtask))) {
             return -1;
+        }
+        // Проверяем имеет ли подзадача временной интервал.
+        // Если да, то добавляем в коллекцию задач, отсортированных по приоритету.
+        if (subtask.getStartTime() != null) {
+            prioritizedTasks.add(subtask);
         }
 
         int epicId = subtask.getEpicId();
@@ -176,22 +161,29 @@ public class InMemoryTaskManager implements TaskManager {
         epic.addSubtaskId(subtask.getId());
         updateEpicStatus(epicId);
         updateEpicDuration(epicId);
+
         return id;
     }
 
     @Override
     public void updateTask(Task task) {
-        // Проверяем не пересекается ли по времени задача с другой задачей или подзадачей. Если пересекается, то задачу отбрасываем.
-        if (getPrioritizedTasks().stream()
-                .anyMatch(taskFromStream -> isOverlap(taskFromStream, task))) {
-            return;
-        }
-
         int id = task.getId();
         Task savedTask = tasks.get(id);
         if (savedTask == null) {
             return;
         }
+        // Проверяем не пересекается ли по времени задача с другой задачей или подзадачей.
+        // Если пересекается, то задачу отбрасываем (отклоняем обновление).
+        if (getPrioritizedTasks().stream()
+                .anyMatch(taskFromStream -> isOverlap(taskFromStream, task))) {
+            return;
+        }
+        // Проверяем имеет ли обновленная задача временной интервал.
+        // Если да, то добавляем в коллекцию задач, отсортированных по приоритету.
+        if (task.getStartTime() != null) {
+            prioritizedTasks.add(task);
+        }
+
         tasks.put(id, task);
     }
 
@@ -208,18 +200,24 @@ public class InMemoryTaskManager implements TaskManager {
 
     @Override
     public void updateSubtask(Subtask subtask) {
-        // Проверяем не пересекается ли по времени задача с другой задачей или подзадачей. Если пересекается, то задачу отбрасываем.
-        if (getPrioritizedTasks().stream()
-                .anyMatch(taskFromStream -> isOverlap(taskFromStream, subtask))) {
-            return;
-        }
-
         if (subtask == null) {
             return;
         }
         if (epics.get(subtask.getEpicId()) == null) {
             return;
         }
+        // Проверяем не пересекается ли по времени подзадача с другой задачей или подзадачей.
+        // Если пересекается, то подзадачу отбрасываем (отклоняем обновление).
+        if (getPrioritizedTasks().stream()
+                .anyMatch(taskFromStream -> isOverlap(taskFromStream, subtask))) {
+            return;
+        }
+        // Проверяем имеет ли обновленная подзадача временной интервал.
+        // Если да, то добавляем в коллекцию задач, отсортированных по приоритету.
+        if (subtask.getStartTime() != null) {
+            prioritizedTasks.add(subtask);
+        }
+
         subtasks.replace(subtask.getId(), subtask);
         updateEpicStatus(subtask.getEpicId());
         updateEpicDuration(subtask.getEpicId());
@@ -229,6 +227,7 @@ public class InMemoryTaskManager implements TaskManager {
     public void deleteTaskById(int id) {
         tasks.remove(id);
         historyManager.remove(id);
+        prioritizedTasks.remove(tasks.get(id));
     }
 
     @Override
@@ -236,6 +235,7 @@ public class InMemoryTaskManager implements TaskManager {
         List<Integer> subtaskIds = epics.get(id).getSubtaskIds();
         for (Integer subtaskId : subtaskIds) {
             subtasks.remove(subtaskId);
+            prioritizedTasks.remove(subtasks.get(subtaskId));
             historyManager.remove(subtaskId);
         }
         epics.remove(id);
@@ -253,6 +253,7 @@ public class InMemoryTaskManager implements TaskManager {
         updateEpicStatus(epic.getId());
         updateEpicDuration(epic.getId());
         historyManager.remove(id);
+        prioritizedTasks.remove(subtasks.get(id));
     }
 
     @Override
