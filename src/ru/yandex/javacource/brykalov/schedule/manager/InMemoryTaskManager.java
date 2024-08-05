@@ -41,7 +41,9 @@ public class InMemoryTaskManager implements TaskManager {
     public void deleteAllTasks() {
         for (Task task : tasks.values()) {
             historyManager.remove(task.getId());
-            prioritizedTasks.remove(task);
+            if (task.getStartTime() != null) {
+                prioritizedTasks.remove(task);
+            }
         }
 
         tasks.clear();
@@ -50,7 +52,11 @@ public class InMemoryTaskManager implements TaskManager {
         // и он становится более сложным для понимания как мне кажется...
 //
 //        tasks.values().stream()
-//                .peek(prioritizedTasks::remove)
+//                .peek(task -> {
+//                    if (task.getStartTime() != null) {
+//                        prioritizedTasks.remove(task);
+//                    }
+//                })
 //                .map(Task::getId)
 //                .peek(historyManager::remove);
 //
@@ -64,7 +70,9 @@ public class InMemoryTaskManager implements TaskManager {
         }
         for (Subtask subtask : subtasks.values()) {
             historyManager.remove(subtask.getId());
-            prioritizedTasks.remove(subtask);
+            if (subtask.getStartTime() != null) {
+                prioritizedTasks.remove(subtask);
+            }
         }
 
         epics.clear();
@@ -75,7 +83,9 @@ public class InMemoryTaskManager implements TaskManager {
     public void deleteAllSubtasks() {
         for (Subtask subtask : subtasks.values()) {
             historyManager.remove(subtask.getId());
-            prioritizedTasks.remove(subtask);
+            if (subtask.getStartTime() != null) {
+                prioritizedTasks.remove(subtask);
+            }
         }
         for (Epic epic : epics.values()) {
             epic.clearSubtaskIds();
