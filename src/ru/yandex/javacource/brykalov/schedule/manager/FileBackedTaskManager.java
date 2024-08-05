@@ -30,7 +30,6 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
     }
 
     public void save() {
-// TODO добавить новые поля задач (время начала, продолжительность)
         try (BufferedWriter fw = new BufferedWriter(new FileWriter(file, StandardCharsets.UTF_8))) {
             fw.write(HEADERS);
             fw.newLine();
