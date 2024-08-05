@@ -273,6 +273,24 @@ public class InMemoryTaskManager implements TaskManager {
         return historyManager.getHistory();
     }
 
+    public boolean isOverlap(Task task1, Task task2) {
+        if (task1.getStartTime() == null || task1.getEndTime() == null
+                || task2.getStartTime() == null || task2.getEndTime() == null) {
+            return false;
+        }
+
+        LocalDateTime start1 = task1.getStartTime();
+        LocalDateTime end1 = task1.getEndTime();
+        LocalDateTime start2 = task2.getStartTime();
+        LocalDateTime end2 = task2.getEndTime();
+
+        return (start1.isAfter(start2) && start1.isBefore(end2))
+                || (end1.isAfter(start2) && end1.isBefore(end2))
+                || (start2.isAfter(start1) && start2.isBefore(end1))
+                || (end2.isAfter(start1) && end2.isBefore(end1))
+                || (start1.isEqual(start2) && end2.isEqual(end2));
+    }
+
     private void updateEpicStatus(int epicId) {
         List<Integer> subtaskIds = epics.get(epicId).getSubtaskIds();
         int numberOfNewTask = 0;
@@ -313,20 +331,5 @@ public class InMemoryTaskManager implements TaskManager {
             epic.setStartTime(maybeStartTime.get());
             epic.setDuration(Duration.between(maybeStartTime.get(), maybeEndTime.get()));
         }
-    }
-
-    private boolean isOverlap(Task task1, Task task2) {
-        if (task1.getStartTime() == null || task1.getEndTime() == null
-                || task2.getStartTime() == null || task2.getEndTime() == null) {
-            return false;
-        }
-
-        LocalDateTime start1 = task1.getStartTime();
-        LocalDateTime end1 = task1.getEndTime();
-        LocalDateTime start2 = task2.getStartTime();
-        LocalDateTime end2 = task2.getEndTime();
-
-        return (start1.isAfter(start2) && start1.isBefore(end2)) || (end1.isAfter(start2) && end1.isBefore(end2))
-                || (start2.isAfter(start1) && start2.isBefore(end1)) || (end2.isAfter(start1) && end2.isBefore(end1));
     }
 }

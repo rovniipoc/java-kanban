@@ -1,5 +1,6 @@
 package ru.yandex.javacource.brykalov.schedule.manager;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import ru.yandex.javacource.brykalov.schedule.task.Epic;
@@ -7,6 +8,8 @@ import ru.yandex.javacource.brykalov.schedule.task.Status;
 import ru.yandex.javacource.brykalov.schedule.task.Subtask;
 import ru.yandex.javacource.brykalov.schedule.task.Task;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -55,12 +58,16 @@ public class InMemoryTaskManagerTest {
         String nameTask = "Задача";
         String descriptionTask = "Описание задачи";
         Status statusTask = NEW;
-        Task task = new Task(nameTask, descriptionTask, statusTask);
+        LocalDateTime startTimeTask = LocalDateTime.of(1, 1, 1, 1, 1);
+        Duration durationTask = Duration.ofMinutes(1);
+        Task task = new Task(nameTask, descriptionTask, statusTask, startTimeTask, durationTask);
         int taskId = inMemoryTaskManager.addNewTask(task);
         Task taskFromManager = inMemoryTaskManager.getTask(taskId);
         assertEquals(nameTask, taskFromManager.getName());
         assertEquals(descriptionTask, taskFromManager.getDescription());
         assertEquals(statusTask, taskFromManager.getStatus());
+        assertEquals(startTimeTask, taskFromManager.getStartTime());
+        assertEquals(durationTask, taskFromManager.getDuration());
 
         String nameEpic = "Эпик";
         String descriptionEpic = "Описание эпика";
@@ -73,13 +80,17 @@ public class InMemoryTaskManagerTest {
         String nameSubtask = "Подзадача";
         String descriptionSubtask = "Описание подзадачи";
         Status statusSubtask = NEW;
-        Subtask subtask = new Subtask(nameSubtask, descriptionSubtask, epicId, statusSubtask);
+        LocalDateTime startTimeSubtask = LocalDateTime.of(1, 1, 1, 1, 1);
+        Duration durationSubtask = Duration.ofMinutes(1);
+        Subtask subtask = new Subtask(nameSubtask, descriptionSubtask, epicId, statusSubtask, startTimeSubtask, durationSubtask);
         int subtaskId = inMemoryTaskManager.addNewSubtask(subtask);
         Subtask subtaskFromManager = inMemoryTaskManager.getSubtask(subtaskId);
         assertEquals(nameSubtask, subtaskFromManager.getName());
         assertEquals(descriptionSubtask, subtaskFromManager.getDescription());
         assertEquals(statusSubtask, subtaskFromManager.getStatus());
         assertEquals(epicId, subtaskFromManager.getEpicId());
+        assertEquals(startTimeSubtask, subtaskFromManager.getStartTime());
+        assertEquals(durationSubtask, subtaskFromManager.getDuration());
     }
 
     @Test
@@ -319,8 +330,38 @@ public class InMemoryTaskManagerTest {
 
     @Test
     void tasksOverlapTest() {
-        //TODO
-    }
+        // Проверка работы метода по определению пересечения временных интервалов между собой
+        LocalDateTime startTimeTask = LocalDateTime.of(1, 1, 1, 0, 0);
+        Duration durationTask = Duration.ofDays(10);
+        Task task1 = new Task("name", "description", NEW, startTimeTask, durationTask);
 
-    //TODO Тесты задач с новыми полями (время начала, продолжительность)
+        startTimeTask = LocalDateTime.of(2, 1, 1, 0, 0);
+        durationTask = Duration.ofDays(10);
+        Task task2 = new Task("name", "description", NEW, startTimeTask, durationTask);
+
+        Assertions.assertFalse(inMemoryTaskManager.isOverlap(task1, task2));
+        Assertions.assertFalse(inMemoryTaskManager.isOverlap(task2, task1));
+
+        startTimeTask = LocalDateTime.of(1, 1, 1, 0, 0);
+        durationTask = Duration.ofDays(10);
+        task1 = new Task("name", "description", NEW, startTimeTask, durationTask);
+
+        startTimeTask = LocalDateTime.of(1, 1, 1, 0, 0);
+        durationTask = Duration.ofDays(10);
+        task2 = new Task("name", "description", NEW, startTimeTask, durationTask);
+
+        Assertions.assertTrue(inMemoryTaskManager.isOverlap(task1, task2));
+        Assertions.assertTrue(inMemoryTaskManager.isOverlap(task2, task1));
+
+        startTimeTask = LocalDateTime.of(1, 1, 1, 0, 0);
+        durationTask = Duration.ofDays(10);
+        task1 = new Task("name", "description", NEW, startTimeTask, durationTask);
+
+        startTimeTask = LocalDateTime.of(1, 1, 5, 0, 0);
+        durationTask = Duration.ofDays(10);
+        task2 = new Task("name", "description", NEW, startTimeTask, durationTask);
+
+        Assertions.assertTrue(inMemoryTaskManager.isOverlap(task1, task2));
+        Assertions.assertTrue(inMemoryTaskManager.isOverlap(task2, task1));
+    }
 }
