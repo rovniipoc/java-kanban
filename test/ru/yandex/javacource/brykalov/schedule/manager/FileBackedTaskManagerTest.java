@@ -123,19 +123,20 @@ public class FileBackedTaskManagerTest {
     }
 
     @Test
-    void exceptionsTest() {
+    void exceptionsTest() throws IOException {
         // Тест на исключения
 
         // В теории тема тестов на исключения не раскрывалась.
-        // Даже используя подсказку в ТЗ я не могу понять как корректно написать этот тест.
-        // А точнее как вызвать то самое исключение при попытке создать файл или при считывании/записи из/в файл.
+        // Не знаю как вызвать исключение при попытке создать файл или при записи в файл.
         // Есть мысли, что исключение можно поймать при попытке создания файла в защищенной (для записи) директории, но как это сделать в тестах java?
-        // Пробовал сделать так (но прилетает NullPointerException):
-        //
-//        assertThrows(FileNotFoundException.class, () -> {
-//            File nonExistentFile = null;
-//            FileBackedTaskManager fileBackedTaskManager1 = new FileBackedTaskManager(nonExistentFile);
-//        }, "Отсутствие пути к файлу должно приводить к исключению");
+
+        File tempFile = File.createTempFile("temp", ".csv");
+        FileBackedTaskManager fileBackedTaskManager = new FileBackedTaskManager(tempFile);
+
+        assertThrows(ManagerSaveException.class, () -> {
+            File file = new File("resources/nonExistentFile.csv");
+            fileBackedTaskManager.loadFromFile(file);
+        }, "Попытка обращения к несуществующему файлу должна приводить к исключению");
     }
 
 }
