@@ -62,8 +62,8 @@ public class Task {
         this.description = description;
     }
 
-    public Optional<LocalDateTime> getStartTime() {
-        return Optional.ofNullable(startTime);
+    public LocalDateTime getStartTime() {
+        return startTime;
     }
 
     public void setStatus(Status status) {
@@ -74,19 +74,19 @@ public class Task {
         this.startTime = startTime;
     }
 
-    public Optional<Duration> getDuration() {
-        return Optional.ofNullable(duration);
+    public Duration getDuration() {
+        return duration;
     }
 
     public void setDuration(Duration duration) {
         this.duration = duration;
     }
 
-    public Optional<LocalDateTime> getEndTime() {
+    public LocalDateTime getEndTime() {
         if (startTime != null && duration != null) {
-            return Optional.of(startTime.plus(duration));
+            return startTime.plus(duration);
         }
-        return Optional.empty();
+        return null;
     }
 
     @Override
@@ -104,8 +104,8 @@ public class Task {
 
     @Override
     public String toString() {
-        if (startTime != null && duration != null && getEndTime().isPresent()) {
-            return "{" + name + ", " + description + ", id=" + id + ", " + status + ", start/end/duration=" + startTime + "/" + getEndTime().get() + "/" + duration + "}";
+        if (startTime != null && duration != null) {
+            return "{" + name + ", " + description + ", id=" + id + ", " + status + ", start/end/duration=" + startTime + "/" + getEndTime() + "/" + duration + "}";
         }
         return "{" + name + ", " + description + ", id=" + id + ", " + status + "}";
     }

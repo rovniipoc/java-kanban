@@ -48,9 +48,9 @@ public class Epic extends Task {
 
     @Override
     public String toString() {
-        if (startTime != null && duration != null && getEndTime().isPresent()) {
+        if (startTime != null && duration != null) {
             return "{" + name + ", " + description + ", id=" + id + ", SubtasksId=" + subtaskIds + ", " + status
-                    + ", start/end/duration=" + startTime + "/" + getEndTime().get() + "/" + duration + "}";
+                    + ", start/end/duration=" + startTime + "/" + getEndTime() + "/" + duration + "}";
         }
         return "{" + name + ", " + description + ", id=" + id + ", SubtasksId=" + subtaskIds + ", " + status + "}";
     }

@@ -36,18 +36,18 @@ public class InMemoryTaskManager implements TaskManager {
         Comparator<Task> comparator = new Comparator<Task>() {
             @Override
             public int compare(Task o1, Task o2) {
-                return o1.getStartTime().get().compareTo(o2.getStartTime().get());
+                return o1.getStartTime().compareTo(o2.getStartTime());
             }
         };
 
         final Set<Task> prioritizedTasks = new TreeSet<>(comparator);
 
         List<Task> tasksWithDuration = getTaskList().stream()
-                .filter(task -> task.getStartTime().isPresent())
+                .filter(task -> task.getStartTime() != null)
                 .toList();
 
         List<Subtask> subtasksWithDuration = getSubtaskList().stream()
-                .filter(subtask -> subtask.getStartTime().isPresent())
+                .filter(subtask -> subtask.getStartTime() != null)
                 .toList();
 
         prioritizedTasks.addAll(tasksWithDuration);
@@ -301,13 +301,11 @@ public class InMemoryTaskManager implements TaskManager {
 
         Optional<LocalDateTime> maybeStartTime = subtaskIds.stream().map(subtasks::get)
                 .map(Task::getStartTime)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
+                .filter(Objects::nonNull)
                 .min(LocalDateTime::compareTo);
         Optional<LocalDateTime> maybeEndTime = subtaskIds.stream().map(subtasks::get)
                 .map(Task::getEndTime)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
+                .filter(Objects::nonNull)
                 .max(LocalDateTime::compareTo);
 
         if (maybeStartTime.isPresent() && maybeEndTime.isPresent()) {
@@ -317,14 +315,15 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     private boolean isOverlap(Task task1, Task task2) {
-        if (task1.getStartTime().isEmpty() || task1.getEndTime().isEmpty() || task2.getStartTime().isEmpty() || task2.getEndTime().isEmpty()) {
+        if (task1.getStartTime() == null || task1.getEndTime() == null
+                || task2.getStartTime() == null || task2.getEndTime() == null) {
             return false;
         }
 
-        LocalDateTime start1 = task1.getStartTime().get();
-        LocalDateTime end1 = task1.getEndTime().get();
-        LocalDateTime start2 = task2.getStartTime().get();
-        LocalDateTime end2 = task2.getEndTime().get();
+        LocalDateTime start1 = task1.getStartTime();
+        LocalDateTime end1 = task1.getEndTime();
+        LocalDateTime start2 = task2.getStartTime();
+        LocalDateTime end2 = task2.getEndTime();
 
         return (start1.isAfter(start2) && start1.isBefore(end2)) || (end1.isAfter(start2) && end1.isBefore(end2))
                 || (start2.isAfter(start1) && start2.isBefore(end1)) || (end2.isAfter(start1) && end2.isBefore(end1));
