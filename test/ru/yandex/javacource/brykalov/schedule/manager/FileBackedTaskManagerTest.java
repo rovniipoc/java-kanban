@@ -12,8 +12,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class FileBackedTaskManagerTest {
 
@@ -123,5 +122,20 @@ public class FileBackedTaskManagerTest {
 
     }
 
-    //TODO тесты на корректный перехват исключений при работе с файлами
+    @Test
+    void exceptionsTest() {
+        // Тест на исключения
+
+        // В теории тема тестов на исключения не раскрывалась.
+        // Даже используя подсказку в ТЗ я не могу понять как корректно написать этот тест.
+        // А точнее как вызвать то самое исключение при попытке создать файл или при считывании/записи из/в файл.
+        // Есть мысли, что исключение можно поймать при попытке создания файла в защищенной (для записи) директории, но как это сделать в тестах java?
+        // Пробовал сделать так (но прилетает NullPointerException):
+        //
+//        assertThrows(FileNotFoundException.class, () -> {
+//            File nonExistentFile = null;
+//            FileBackedTaskManager fileBackedTaskManager1 = new FileBackedTaskManager(nonExistentFile);
+//        }, "Отсутствие пути к файлу должно приводить к исключению");
+    }
+
 }
