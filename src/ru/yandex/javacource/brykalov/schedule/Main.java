@@ -34,7 +34,7 @@ public class Main {
         int subtaskId2 = fileBackedTaskManager1.addNewSubtask(subtask2);
 
         Subtask subtask3 = new Subtask("Подзадача3", "Описание подзадачи3", epicId2, Status.NEW,
-                LocalDateTime.of(2024, 8, 4, 2, 0),
+                LocalDateTime.of(2025, 8, 4, 2, 0),
                 Duration.ofMinutes(300));
         int subtaskId3 = fileBackedTaskManager1.addNewSubtask(subtask3);
 
@@ -42,7 +42,7 @@ public class Main {
         int taskId1 = fileBackedTaskManager1.addNewTask(task1);
 
         Task task2 = new Task("Задача2", "Описание задачи2", Status.NEW,
-                LocalDateTime.of(2025, 1, 1, 12, 0),
+                LocalDateTime.of(2026, 1, 1, 12, 0),
                 Duration.ofMinutes(60));
         int taskId2 = fileBackedTaskManager1.addNewTask(task2);
 

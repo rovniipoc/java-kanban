@@ -8,6 +8,7 @@ import ru.yandex.javacource.brykalov.schedule.task.Task;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -40,7 +41,7 @@ public class FileBackedTaskManagerTest {
         int subtaskId2 = fileBackedTaskManager1.addNewSubtask(subtask2);
 
         Subtask subtask3 = new Subtask("Подзадача3", "Описание подзадачи3", epicId2, Status.NEW,
-                LocalDateTime.of(2024, 8, 4, 2, 0),
+                LocalDateTime.of(2025, 8, 4, 2, 0),
                 Duration.ofMinutes(300));
         int subtaskId3 = fileBackedTaskManager1.addNewSubtask(subtask3);
 
@@ -48,7 +49,7 @@ public class FileBackedTaskManagerTest {
         int taskId1 = fileBackedTaskManager1.addNewTask(task1);
 
         Task task2 = new Task("Задача2", "Описание задачи2", Status.NEW,
-                LocalDateTime.of(2025, 1, 1, 12, 0),
+                LocalDateTime.of(2026, 1, 1, 12, 0),
                 Duration.ofMinutes(60));
         int taskId2 = fileBackedTaskManager1.addNewTask(task2);
 
@@ -127,8 +128,6 @@ public class FileBackedTaskManagerTest {
         // Тест на исключения
 
         // В теории тема тестов на исключения не раскрывалась.
-        // Не знаю как вызвать исключение при попытке создать файл или при записи в файл.
-        // Есть мысли, что исключение можно поймать при попытке создания файла в защищенной (для записи) директории, но как это сделать в тестах java?
 
         File tempFile = File.createTempFile("temp", ".csv");
         FileBackedTaskManager fileBackedTaskManager = new FileBackedTaskManager(tempFile);
@@ -137,6 +136,13 @@ public class FileBackedTaskManagerTest {
             File file = new File("resources/nonExistentFile.csv");
             fileBackedTaskManager.loadFromFile(file);
         }, "Попытка обращения к несуществующему файлу должна приводить к исключению");
+
+
+        assertThrows(ManagerSaveException.class, () -> {
+            Path path = Path.of("thisdirectorydoesnotexist/temp.csv");
+            FileBackedTaskManager fileBackedTaskManager2 = new FileBackedTaskManager(path.toFile());
+        }, "Попытка обращения к несуществующему пути должна приводить к исключению");
+
     }
 
 }

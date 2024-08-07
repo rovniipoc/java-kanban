@@ -329,39 +329,47 @@ public class InMemoryTaskManagerTest {
     }
 
     @Test
-    void tasksOverlapTest() {
+    void taskValidationTest() {
         // Проверка работы метода по определению пересечения временных интервалов между собой
         LocalDateTime startTimeTask = LocalDateTime.of(1, 1, 1, 0, 0);
         Duration durationTask = Duration.ofDays(10);
-        Task task1 = new Task("name", "description", NEW, startTimeTask, durationTask);
+        final Task task1 = new Task("name", "description", NEW, startTimeTask, durationTask);
 
         startTimeTask = LocalDateTime.of(2, 1, 1, 0, 0);
         durationTask = Duration.ofDays(10);
-        Task task2 = new Task("name", "description", NEW, startTimeTask, durationTask);
+        final Task task2 = new Task("name", "description", NEW, startTimeTask, durationTask);
 
-        Assertions.assertFalse(inMemoryTaskManager.isOverlap(task1, task2));
-        Assertions.assertFalse(inMemoryTaskManager.isOverlap(task2, task1));
-
-        startTimeTask = LocalDateTime.of(1, 1, 1, 0, 0);
-        durationTask = Duration.ofDays(10);
-        task1 = new Task("name", "description", NEW, startTimeTask, durationTask);
-
-        startTimeTask = LocalDateTime.of(1, 1, 1, 0, 0);
-        durationTask = Duration.ofDays(10);
-        task2 = new Task("name", "description", NEW, startTimeTask, durationTask);
-
-        Assertions.assertTrue(inMemoryTaskManager.isOverlap(task1, task2));
-        Assertions.assertTrue(inMemoryTaskManager.isOverlap(task2, task1));
+        inMemoryTaskManager.addNewTask(task2);
+        Assertions.assertDoesNotThrow(() -> inMemoryTaskManager.taskValidate(task1));
+        inMemoryTaskManager.deleteAllTasks();
+        inMemoryTaskManager.addNewTask(task1);
+        Assertions.assertDoesNotThrow(() -> inMemoryTaskManager.taskValidate(task2));
+        inMemoryTaskManager.deleteAllTasks();
 
         startTimeTask = LocalDateTime.of(1, 1, 1, 0, 0);
         durationTask = Duration.ofDays(10);
-        task1 = new Task("name", "description", NEW, startTimeTask, durationTask);
+        final Task task3 = new Task("name", "description", NEW, startTimeTask, durationTask);
+
+        startTimeTask = LocalDateTime.of(1, 1, 1, 0, 0);
+        durationTask = Duration.ofDays(10);
+        final Task task4 = new Task("name", "description", NEW, startTimeTask, durationTask);
+
+        inMemoryTaskManager.addNewTask(task4);
+        Assertions.assertThrows(TaskValidationException.class, () -> inMemoryTaskManager.taskValidate(task3));
+        inMemoryTaskManager.deleteAllTasks();
+        inMemoryTaskManager.addNewTask(task3);
+        Assertions.assertThrows(TaskValidationException.class, () -> inMemoryTaskManager.taskValidate(task4));
+        inMemoryTaskManager.deleteAllTasks();
+
+        startTimeTask = LocalDateTime.of(1, 1, 1, 0, 0);
+        durationTask = Duration.ofDays(10);
+        final Task task5 = new Task("name", "description", NEW, startTimeTask, durationTask);
 
         startTimeTask = LocalDateTime.of(1, 1, 5, 0, 0);
         durationTask = Duration.ofDays(10);
-        task2 = new Task("name", "description", NEW, startTimeTask, durationTask);
+        final Task task6 = new Task("name", "description", NEW, startTimeTask, durationTask);
 
-        Assertions.assertTrue(inMemoryTaskManager.isOverlap(task1, task2));
-        Assertions.assertTrue(inMemoryTaskManager.isOverlap(task2, task1));
+        inMemoryTaskManager.addNewTask(task6);
+        Assertions.assertThrows(TaskValidationException.class, () -> inMemoryTaskManager.taskValidate(task5));
     }
 }
