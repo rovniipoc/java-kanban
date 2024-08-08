@@ -1,10 +1,13 @@
 package ru.yandex.javacource.brykalov.schedule.task;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Epic extends Task {
     private List<Integer> subtaskIds = new ArrayList<>();
+    private LocalDateTime endTime;
 
     public Epic(String name, String description) {
         super(name, description, Status.NEW);
@@ -37,12 +40,24 @@ public class Epic extends Task {
         this.subtaskIds = subtaskIds;
     }
 
-    public void setStatus(Status status) {
-        this.status = status;
+    public void setStartTime(LocalDateTime startTime) {
+        this.startTime = startTime;
+    }
+
+    public void setDuration(Duration duration) {
+        this.duration = duration;
+    }
+
+    public void setEndTime() {
+        this.endTime = this.getEndTime();
     }
 
     @Override
     public String toString() {
+        if (startTime != null && duration != null) {
+            return "{" + name + ", " + description + ", id=" + id + ", SubtasksId=" + subtaskIds + ", " + status
+                    + ", start/end/duration=" + startTime + "/" + getEndTime() + "/" + duration + "}";
+        }
         return "{" + name + ", " + description + ", id=" + id + ", SubtasksId=" + subtaskIds + ", " + status + "}";
     }
 }

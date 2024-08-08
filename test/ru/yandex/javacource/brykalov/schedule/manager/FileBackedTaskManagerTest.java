@@ -8,10 +8,12 @@ import ru.yandex.javacource.brykalov.schedule.task.Task;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class FileBackedTaskManagerTest {
 
@@ -26,16 +28,30 @@ public class FileBackedTaskManagerTest {
         // Создаем задачи в менеджере №1:
         Epic epic1 = new Epic("Эпик1", "Описание эпика1");
         int epicId1 = fileBackedTaskManager1.addNewEpic(epic1);
+
         Epic epic2 = new Epic("Эпик2", "Описание эпика2");
         int epicId2 = fileBackedTaskManager1.addNewEpic(epic2);
-        Subtask subtask1 = new Subtask("Подзадача1", "Описание подзадачи1", epicId2, Status.NEW);
+
+        Subtask subtask1 = new Subtask("Подзадача1", "Описание подзадачи1", epicId2, Status.NEW,
+                LocalDateTime.of(2024, 8, 4, 0, 0),
+                Duration.ofMinutes(360));
         int subtaskId1 = fileBackedTaskManager1.addNewSubtask(subtask1);
+
         Subtask subtask2 = new Subtask("Подзадача2", "Описание подзадачи2", epicId2, Status.NEW);
         int subtaskId2 = fileBackedTaskManager1.addNewSubtask(subtask2);
-        Subtask subtask3 = new Subtask("Подзадача3", "Описание подзадачи3", epicId2, Status.NEW);
+
+        Subtask subtask3 = new Subtask("Подзадача3", "Описание подзадачи3", epicId2, Status.NEW,
+                LocalDateTime.of(2025, 8, 4, 2, 0),
+                Duration.ofMinutes(300));
         int subtaskId3 = fileBackedTaskManager1.addNewSubtask(subtask3);
+
         Task task1 = new Task("Задача", "Описание задачи", Status.NEW);
         int taskId1 = fileBackedTaskManager1.addNewTask(task1);
+
+        Task task2 = new Task("Задача2", "Описание задачи2", Status.NEW,
+                LocalDateTime.of(2026, 1, 1, 12, 0),
+                Duration.ofMinutes(60));
+        int taskId2 = fileBackedTaskManager1.addNewTask(task2);
 
         // Создаем менеджера №2 из файла сохранения
         FileBackedTaskManager fileBackedTaskManager2 = new FileBackedTaskManager(tempFile);
@@ -106,4 +122,27 @@ public class FileBackedTaskManagerTest {
                 "Подзадачи сохраняются/считываются неверно.");
 
     }
+
+    @Test
+    void exceptionsTest() throws IOException {
+        // Тест на исключения
+
+        // В теории тема тестов на исключения не раскрывалась.
+
+        File tempFile = File.createTempFile("temp", ".csv");
+        FileBackedTaskManager fileBackedTaskManager = new FileBackedTaskManager(tempFile);
+
+        assertThrows(ManagerSaveException.class, () -> {
+            File file = new File("resources/nonExistentFile.csv");
+            fileBackedTaskManager.loadFromFile(file);
+        }, "Попытка обращения к несуществующему файлу должна приводить к исключению");
+
+
+        assertThrows(ManagerSaveException.class, () -> {
+            Path path = Path.of("thisdirectorydoesnotexist/temp.csv");
+            FileBackedTaskManager fileBackedTaskManager2 = new FileBackedTaskManager(path.toFile());
+        }, "Попытка обращения к несуществующему пути должна приводить к исключению");
+
+    }
+
 }
