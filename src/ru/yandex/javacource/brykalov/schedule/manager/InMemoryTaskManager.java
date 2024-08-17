@@ -105,8 +105,11 @@ public class InMemoryTaskManager implements TaskManager {
     @Override
     public int addNewTask(Task task) {
         // Проверяем не пересекается ли по времени задача с другой задачей или подзадачей.
-        // Если пересекается, то выкидываем исключение.
-        taskValidate(task);
+        // Если пересекается, то возвращаем код ошибки.
+        if (!taskValidate(task)) {
+            return -1;
+        }
+        ;
         // Проверяем имеет ли задача временной интервал.
         // Если да, то добавляем в коллекцию задач, отсортированных по приоритету.
         if (task.getStartTime() != null) {
@@ -131,8 +134,11 @@ public class InMemoryTaskManager implements TaskManager {
     @Override
     public Integer addNewSubtask(Subtask subtask) {
         // Проверяем не пересекается ли по времени подзадача с другой задачей или подзадачей.
-        // Если пересекается, то выкидываем исключение.
-        taskValidate(subtask);
+        // Если пересекается, то возвращаем код ошибки.
+        if (!taskValidate(subtask)) {
+            return -1;
+        }
+        ;
         // Проверяем имеет ли подзадача временной интервал.
         // Если да, то добавляем в коллекцию задач, отсортированных по приоритету.
         if (subtask.getStartTime() != null) {
@@ -161,8 +167,12 @@ public class InMemoryTaskManager implements TaskManager {
             return;
         }
         // Проверяем не пересекается ли по времени задача с другой задачей или подзадачей.
-        // Если пересекается, то выкидываем исключение.
-        taskValidate(task);
+        // Если пересекается, то игнорируем задачу. Предварительно удаляем из prioritizedTasks
+        // старый экземпляр
+        prioritizedTasks.remove(tasks.get(id));
+        if (!taskValidate(task)) {
+            return;
+        }
         // Проверяем имеет ли обновленная задача временной интервал.
         // Если да, то добавляем в коллекцию задач, отсортированных по приоритету.
         if (task.getStartTime() != null) {
@@ -191,9 +201,14 @@ public class InMemoryTaskManager implements TaskManager {
         if (epics.get(subtask.getEpicId()) == null) {
             return;
         }
+        int id = subtask.getId();
         // Проверяем не пересекается ли по времени подзадача с другой задачей или подзадачей.
-        // Если пересекается, то выкидываем исключение.
-        taskValidate(subtask);
+        // Если пересекается, то игнорируем подзадачу. Предварительно удаляем из prioritizedTasks
+        // старый экземпляр
+        prioritizedTasks.remove(subtasks.get(id));
+        if (!taskValidate(subtask)) {
+            return;
+        }
         // Проверяем имеет ли обновленная подзадача временной интервал.
         // Если да, то добавляем в коллекцию задач, отсортированных по приоритету.
         if (subtask.getStartTime() != null) {
@@ -253,9 +268,10 @@ public class InMemoryTaskManager implements TaskManager {
         return historyManager.getHistory();
     }
 
-    public void taskValidate(Task task) {
+    @Override
+    public boolean taskValidate(Task task) {
         if (task.getStartTime() == null || task.getEndTime() == null) {
-            return;
+            return true;
         }
 
         LocalDateTime start1 = task.getStartTime();
@@ -272,10 +288,11 @@ public class InMemoryTaskManager implements TaskManager {
                     || (start2.isAfter(start1) && start2.isBefore(end1))
                     || (end2.isAfter(start1) && end2.isBefore(end1))
                     || (start1.isEqual(start2) && end2.isEqual(end2))) {
-                throw new TaskValidationException("Задача пересекается с id=" + prioritizedTask.getId()
-                        + " (с " + prioritizedTask.getStartTime() + " по " + prioritizedTask.getEndTime() + ")");
+                return false;
             }
         }
+
+        return true;
     }
 
     protected void updateEpic(int epicId) {
