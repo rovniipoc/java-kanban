@@ -1,13 +1,10 @@
 package ru.yandex.javacource.brykalov.schedule.manager;
 
 import com.google.gson.*;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonWriter;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 import ru.yandex.javacource.brykalov.schedule.task.Epic;
-import ru.yandex.javacource.brykalov.schedule.task.Status;
 import ru.yandex.javacource.brykalov.schedule.task.Subtask;
 import ru.yandex.javacource.brykalov.schedule.task.Task;
 
@@ -20,23 +17,31 @@ import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 public class HttpTaskServer {
     private static final int PORT = 8080;
-    private static final File file = new File("resources/file.csv");
-    private static final TaskManager manager = Managers.getFileBackedTaskManager(file);
     private static final Gson gson = new GsonBuilder()
             .setPrettyPrinting()
             .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeTypeAdapter())
             .registerTypeAdapter(Duration.class, new DurationTypeAdapter())
             .create();
+    private static TaskManager manager;
     private static HttpServer httpServer;
 
+    public HttpTaskServer() {
+        File file = new File("resources/file.csv");
+        manager = Managers.getFileBackedTaskManager(file);
+    }
+
+    public HttpTaskServer(TaskManager taskManager) {
+        manager = taskManager;
+    }
+
     public static void main(String[] args) throws IOException {
+        HttpTaskServer httpTaskServer = new HttpTaskServer();
+
         manager.deleteAllTasks();
         manager.deleteAllEpics();
         manager.deleteAllSubtasks();
