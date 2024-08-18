@@ -36,17 +36,20 @@ public class HttpTaskServer {
             .create();
 
     public static void main(String[] args) throws IOException {
+        manager.deleteAllTasks();
+        manager.deleteAllEpics();
+        manager.deleteAllSubtasks();
+
+        startHttpServer();
+    }
+
+    public static void startHttpServer() throws IOException {
         HttpServer httpServer = HttpServer.create(new InetSocketAddress(PORT), 0);
         httpServer.createContext("/tasks", new tasksHandler());
         httpServer.createContext("/subtasks", new subtasksHandler());
         httpServer.createContext("/epics", new epicsHandler());
         httpServer.createContext("/history", new historyHandler());
         httpServer.createContext("/prioritized", new prioritizedHandler());
-
-        manager.deleteAllTasks();
-        manager.deleteAllEpics();
-        manager.deleteAllSubtasks();
-
         httpServer.start();
         System.out.println("HTTP-сервер запущен на " + PORT + " порту.");
     }
