@@ -65,6 +65,10 @@ public class HttpTaskServer {
         System.out.println("HTTP-сервер на " + PORT + " порту остановлен.");
     }
 
+    public Gson getGson() {
+        return gson;
+    }
+
     public static class LocalDateTimeTypeAdapter implements JsonSerializer<LocalDateTime>, JsonDeserializer<LocalDateTime> {
         @Override
         public LocalDateTime deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
