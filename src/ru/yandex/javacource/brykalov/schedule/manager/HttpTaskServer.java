@@ -39,7 +39,7 @@ public class HttpTaskServer {
         httpServer.createContext("/tasks", new tasksHandler());
         httpServer.createContext("/subtasks", new subtasksHandler());
 //        httpServer.createContext("/epics", new epicsHandler());
-//        httpServer.createContext("/history", new historyHandler());
+        httpServer.createContext("/history", new historyHandler());
         httpServer.createContext("/prioritized", new prioritizedHandler());
 
         manager.deleteAllTasks();
@@ -269,10 +269,35 @@ public class HttpTaskServer {
         }
     }
 
-    class historyHandler implements HttpHandler {
+    static class historyHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
+            String method = exchange.getRequestMethod();
+            URI requestURI = exchange.getRequestURI();
+            String path = requestURI.getPath();
+            String[] pathParts = path.split("/");
+            InputStream inputStream = exchange.getRequestBody();
+            String body = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+            String response = "";
+            int rCode = 0;
 
+            switch (method) {
+                case "GET":
+                    List<Task> tasks = manager.getHistory();
+                    response = gson.toJson(tasks);
+                    rCode = 200;
+                    break;
+
+                default:
+                    response = "Bad request";
+                    rCode = 400;
+            }
+
+            try (OutputStream os = exchange.getResponseBody()) {
+                exchange.sendResponseHeaders(rCode, 0);
+                os.write(response.getBytes(StandardCharsets.UTF_8));
+            }
+            exchange.close();
         }
     }
 
