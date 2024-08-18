@@ -60,7 +60,7 @@ public class HttpTaskServer {
         System.out.println("HTTP-сервер запущен на " + PORT + " порту.");
     }
 
-    public static void stopHttpServer() throws IOException {
+    public static void stopHttpServer() {
         httpServer.stop(0);
         System.out.println("HTTP-сервер на " + PORT + " порту остановлен.");
     }
@@ -102,8 +102,8 @@ public class HttpTaskServer {
             String[] pathParts = path.split("/");
             InputStream inputStream = exchange.getRequestBody();
             String body = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
-            String response = "";
-            int rCode = 0;
+            String response;
+            int rCode;
             int taskId;
 
             switch (method) {
@@ -197,8 +197,8 @@ public class HttpTaskServer {
             String[] pathParts = path.split("/");
             InputStream inputStream = exchange.getRequestBody();
             String body = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
-            String response = "";
-            int rCode = 0;
+            String response;
+            int rCode;
             int subtaskId;
 
             switch (method) {
@@ -290,8 +290,8 @@ public class HttpTaskServer {
             String[] pathParts = path.split("/");
             InputStream inputStream = exchange.getRequestBody();
             String body = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
-            String response = "";
-            int rCode = 0;
+            String response;
+            int rCode;
             int epicId;
 
             switch (method) {
@@ -386,8 +386,8 @@ public class HttpTaskServer {
             String[] pathParts = path.split("/");
             InputStream inputStream = exchange.getRequestBody();
             String body = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
-            String response = "";
-            int rCode = 0;
+            String response;
+            int rCode;
 
             switch (method) {
                 case "GET":
@@ -418,8 +418,8 @@ public class HttpTaskServer {
             String[] pathParts = path.split("/");
             InputStream inputStream = exchange.getRequestBody();
             String body = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
-            String response = "";
-            int rCode = 0;
+            String response;
+            int rCode;
 
             switch (method) {
                 case "GET":
