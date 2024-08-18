@@ -51,11 +51,11 @@ public class HttpTaskServer {
 
     public static void startHttpServer() throws IOException {
         httpServer = HttpServer.create(new InetSocketAddress(PORT), 0);
-        httpServer.createContext("/tasks", new tasksHandler());
-        httpServer.createContext("/subtasks", new subtasksHandler());
-        httpServer.createContext("/epics", new epicsHandler());
-        httpServer.createContext("/history", new historyHandler());
-        httpServer.createContext("/prioritized", new prioritizedHandler());
+        httpServer.createContext("/tasks", new TasksHandler());
+        httpServer.createContext("/subtasks", new SubtasksHandler());
+        httpServer.createContext("/epics", new EpicsHandler());
+        httpServer.createContext("/history", new HistoryHandler());
+        httpServer.createContext("/prioritized", new PrioritizedHandler());
         httpServer.start();
         System.out.println("HTTP-сервер запущен на " + PORT + " порту.");
     }
@@ -93,7 +93,7 @@ public class HttpTaskServer {
         }
     }
 
-    static class tasksHandler implements HttpHandler {
+    static class TasksHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
             String method = exchange.getRequestMethod();
@@ -186,7 +186,7 @@ public class HttpTaskServer {
         }
     }
 
-    static class subtasksHandler implements HttpHandler {
+    static class SubtasksHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
             String method = exchange.getRequestMethod();
@@ -279,7 +279,7 @@ public class HttpTaskServer {
         }
     }
 
-    static class epicsHandler implements HttpHandler {
+    static class EpicsHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
             String method = exchange.getRequestMethod();
@@ -375,7 +375,7 @@ public class HttpTaskServer {
         }
     }
 
-    static class historyHandler implements HttpHandler {
+    static class HistoryHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
             String method = exchange.getRequestMethod();
@@ -407,7 +407,7 @@ public class HttpTaskServer {
         }
     }
 
-    static class prioritizedHandler implements HttpHandler {
+    static class PrioritizedHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
             String method = exchange.getRequestMethod();
