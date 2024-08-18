@@ -39,7 +39,7 @@ public class HttpTaskServer {
 //        httpServer.createContext("/subtasks", new subtasksHandler());
 //        httpServer.createContext("/epics", new epicsHandler());
 //        httpServer.createContext("/history", new historyHandler());
-//        httpServer.createContext("/prioritized", new prioritizedHandler());
+        httpServer.createContext("/prioritized", new prioritizedHandler());
 
         manager.deleteAllTasks();
         manager.deleteAllEpics();
@@ -144,6 +144,8 @@ public class HttpTaskServer {
                     if (pathParts.length == 3) {
                         taskId = Integer.parseInt(pathParts[2]);
                         manager.deleteTaskById(taskId);
+                        rCode = 201;
+
                     } else {
                         response = "Bad request";
                         rCode = 400;
@@ -159,36 +161,63 @@ public class HttpTaskServer {
                 exchange.sendResponseHeaders(rCode, 0);
                 os.write(response.getBytes(StandardCharsets.UTF_8));
             }
+            exchange.close();
 
             //TODO написать метод writeResponse()
         }
     }
-}
 
-class subtasksHandler implements HttpHandler {
-    @Override
-    public void handle(HttpExchange exchange) throws IOException {
 
+    class subtasksHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+
+        }
     }
-}
 
-class epicsHandler implements HttpHandler {
-    @Override
-    public void handle(HttpExchange exchange) throws IOException {
+    class epicsHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
 
+        }
     }
-}
 
-class historyHandler implements HttpHandler {
-    @Override
-    public void handle(HttpExchange exchange) throws IOException {
+    class historyHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
 
+        }
     }
-}
 
-class prioritizedHandler implements HttpHandler {
-    @Override
-    public void handle(HttpExchange exchange) throws IOException {
+    static class prioritizedHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            String method = exchange.getRequestMethod();
+            URI requestURI = exchange.getRequestURI();
+            String path = requestURI.getPath();
+            String[] pathParts = path.split("/");
+            InputStream inputStream = exchange.getRequestBody();
+            String body = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+            String response = "";
+            int rCode = 0;
 
+            switch (method) {
+                case "GET":
+                    List<Task> tasks = manager.getPrioritizedTasks();
+                    response = gson.toJson(tasks);
+                    rCode = 200;
+                    break;
+
+                default:
+                    response = "Bad request";
+                    rCode = 400;
+            }
+
+            try (OutputStream os = exchange.getResponseBody()) {
+                exchange.sendResponseHeaders(rCode, 0);
+                os.write(response.getBytes(StandardCharsets.UTF_8));
+            }
+            exchange.close();
+        }
     }
 }
