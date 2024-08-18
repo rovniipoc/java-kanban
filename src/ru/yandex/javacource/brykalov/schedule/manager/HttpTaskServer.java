@@ -34,6 +34,7 @@ public class HttpTaskServer {
             .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeTypeAdapter())
             .registerTypeAdapter(Duration.class, new DurationTypeAdapter())
             .create();
+    private static HttpServer httpServer;
 
     public static void main(String[] args) throws IOException {
         manager.deleteAllTasks();
@@ -44,7 +45,7 @@ public class HttpTaskServer {
     }
 
     public static void startHttpServer() throws IOException {
-        HttpServer httpServer = HttpServer.create(new InetSocketAddress(PORT), 0);
+        httpServer = HttpServer.create(new InetSocketAddress(PORT), 0);
         httpServer.createContext("/tasks", new tasksHandler());
         httpServer.createContext("/subtasks", new subtasksHandler());
         httpServer.createContext("/epics", new epicsHandler());
@@ -52,6 +53,11 @@ public class HttpTaskServer {
         httpServer.createContext("/prioritized", new prioritizedHandler());
         httpServer.start();
         System.out.println("HTTP-сервер запущен на " + PORT + " порту.");
+    }
+
+    public static void stopHttpServer() throws IOException {
+        httpServer.stop(0);
+        System.out.println("HTTP-сервер на " + PORT + " порту остановлен.");
     }
 
     public static class LocalDateTimeTypeAdapter implements JsonSerializer<LocalDateTime>, JsonDeserializer<LocalDateTime> {
