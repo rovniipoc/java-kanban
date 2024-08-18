@@ -45,7 +45,7 @@ interface TaskManager {
 
     void deleteSubtaskById(int id);
 
-    boolean taskValidate(Task task);
+    void taskValidate(Task task);
 
     List<Subtask> getSubtasksFromEpicById(int id);
 

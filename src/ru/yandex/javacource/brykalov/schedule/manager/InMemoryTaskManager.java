@@ -82,10 +82,18 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     @Override
-    public Task getTask(int id) {
-        final Task task = tasks.get(id);
-        historyManager.add(task);
-        return task;
+    public Task getTask(int id) throws NotFoundException {
+        if (tasks.containsKey(id)) {
+            final Task task = tasks.get(id);
+            historyManager.add(task);
+            return task;
+        } else {
+            throw new NotFoundException("Задача с id = " + id + " не найдена.");
+        }
+
+//        final Task task = tasks.get(id);
+//        historyManager.add(task);
+//        return task;
     }
 
     @Override
@@ -103,13 +111,10 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     @Override
-    public int addNewTask(Task task) {
+    public int addNewTask(Task task) throws TaskValidationException {
         // Проверяем не пересекается ли по времени задача с другой задачей или подзадачей.
-        // Если пересекается, то возвращаем код ошибки.
-        if (!taskValidate(task)) {
-            return -1;
-        }
-        ;
+        // Если пересекается, то выкидываем исключение.
+        taskValidate(task);
         // Проверяем имеет ли задача временной интервал.
         // Если да, то добавляем в коллекцию задач, отсортированных по приоритету.
         if (task.getStartTime() != null) {
@@ -134,11 +139,8 @@ public class InMemoryTaskManager implements TaskManager {
     @Override
     public Integer addNewSubtask(Subtask subtask) {
         // Проверяем не пересекается ли по времени подзадача с другой задачей или подзадачей.
-        // Если пересекается, то возвращаем код ошибки.
-        if (!taskValidate(subtask)) {
-            return -1;
-        }
-        ;
+        // Если пересекается, то выкидываем исключение.
+        taskValidate(subtask);
         // Проверяем имеет ли подзадача временной интервал.
         // Если да, то добавляем в коллекцию задач, отсортированных по приоритету.
         if (subtask.getStartTime() != null) {
@@ -160,19 +162,20 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     @Override
-    public void updateTask(Task task) {
+    public void updateTask(Task task) throws NotFoundException, TaskValidationException {
         int id = task.getId();
         Task savedTask = tasks.get(id);
-        if (savedTask == null) {
-            return;
+
+        if (!tasks.containsKey(id)) {
+            throw new NotFoundException("Задача с id = " + id + " не найдена.");
         }
+
         // Проверяем не пересекается ли по времени задача с другой задачей или подзадачей.
-        // Если пересекается, то игнорируем задачу. Предварительно удаляем из prioritizedTasks
+        // Если пересекается, то выкидываем исключение. Предварительно удаляем из prioritizedTasks
         // старый экземпляр
-        prioritizedTasks.remove(tasks.get(id));
-        if (!taskValidate(task)) {
-            return;
-        }
+        prioritizedTasks.remove(savedTask);
+        taskValidate(task);
+
         // Проверяем имеет ли обновленная задача временной интервал.
         // Если да, то добавляем в коллекцию задач, отсортированных по приоритету.
         if (task.getStartTime() != null) {
@@ -203,12 +206,10 @@ public class InMemoryTaskManager implements TaskManager {
         }
         int id = subtask.getId();
         // Проверяем не пересекается ли по времени подзадача с другой задачей или подзадачей.
-        // Если пересекается, то игнорируем подзадачу. Предварительно удаляем из prioritizedTasks
+        // Если пересекается, то выкидываем исключение. Предварительно удаляем из prioritizedTasks
         // старый экземпляр
         prioritizedTasks.remove(subtasks.get(id));
-        if (!taskValidate(subtask)) {
-            return;
-        }
+        taskValidate(subtask);
         // Проверяем имеет ли обновленная подзадача временной интервал.
         // Если да, то добавляем в коллекцию задач, отсортированных по приоритету.
         if (subtask.getStartTime() != null) {
@@ -272,9 +273,9 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     @Override
-    public boolean taskValidate(Task task) {
+    public void taskValidate(Task task) throws TaskValidationException {
         if (task.getStartTime() == null || task.getEndTime() == null) {
-            return true;
+            return;
         }
 
         LocalDateTime start1 = task.getStartTime();
@@ -291,11 +292,10 @@ public class InMemoryTaskManager implements TaskManager {
                     || (start2.isAfter(start1) && start2.isBefore(end1))
                     || (end2.isAfter(start1) && end2.isBefore(end1))
                     || (start1.isEqual(start2) && end2.isEqual(end2))) {
-                return false;
+                throw new TaskValidationException("Задача пересекается с id=" + prioritizedTask.getId()
+                        + " (с " + prioritizedTask.getStartTime() + " по " + prioritizedTask.getEndTime() + ")");
             }
         }
-
-        return true;
     }
 
     protected void updateEpic(int epicId) {

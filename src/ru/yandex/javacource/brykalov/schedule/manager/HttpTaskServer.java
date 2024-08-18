@@ -90,13 +90,13 @@ public class HttpTaskServer {
                 case "GET":
                     if (pathParts.length == 3) {
                         taskId = Integer.parseInt(pathParts[2]);
-                        Task task = manager.getTask(taskId);
-                        if (task == null) {
-                            response = "Not Found";
-                            rCode = 404;
-                        } else {
+                        try {
+                            Task task = manager.getTask(taskId);
                             response = gson.toJson(task);
                             rCode = 200;
+                        } catch (NotFoundException e) {
+                            response = "Not Found:" + e.getMessage();
+                            rCode = 404;
                         }
                     } else if (pathParts.length == 2) {
                         List<Task> tasks = manager.getTaskList();
@@ -111,32 +111,38 @@ public class HttpTaskServer {
                 case "POST":
                     Task task = gson.fromJson(body, Task.class);
                     taskId = task.getId();
-                    if (manager.getTask(taskId) != null) {
-                        // если у задачи есть id и она есть в менеджере
+
+                    try {
                         manager.updateTask(task);
+                        response = "Done: Задача с id = " + taskId + " обновлена.";
                         rCode = 201;
-                    } else {
-                        // если у задачи нет id или ее нет в хранилище
-                        if (task.getDuration() != null) {
+                    } catch (NotFoundException notFoundException) {
+                        if (taskId != 0) {
+                            response = "Not Found: Обновление задачи не выполнено: " + notFoundException.getMessage();
+                            rCode = 404;
+                        } else if (task.getDuration() != null) {
                             // у входящей задачи есть временной интервал
                             // пытаемся добавить поступившую задачу как новую в менеджер
-                            int newTaskId = manager.addNewTask(new Task(task.getName(), task.getDescription(),
-                                    task.getStatus(), task.getStartTime(), task.getDuration()));
-                            if (newTaskId == -1) {
-                                // .addNewTask() вернул ошибку из-за пересечения по времени с другой задачей
-                                response = "Not Acceptable";
-                                rCode = 406;
-                            } else {
-                                // добавление прошло успешно
+                            try {
+                                int newTaskId = manager.addNewTask(new Task(task.getName(), task.getDescription(),
+                                        task.getStatus(), task.getStartTime(), task.getDuration()));
+                                response = "Done: Новая задача с id = " + newTaskId + " добавлена.";
                                 rCode = 201;
+                            } catch (TaskValidationException validationException) {
+                                response = "Not Acceptable: Добавление задачи не выполнено: " + validationException.getMessage();
+                                rCode = 406;
                             }
                         } else {
                             // у входящей задачи нет временного интервала,
                             // добавляем поступившую задачу как новую в менеджер
                             manager.addNewTask(new Task(task.getName(), task.getDescription(), task.getStatus(),
                                     task.getStartTime(), task.getDuration()));
+                            response = "Done: Новая задача с id = " + taskId + " (без временного интервала) добавлена.";
                             rCode = 201;
                         }
+                    } catch (TaskValidationException validationException) {
+                        response = "Not Acceptable: Обновление задачи не выполнено: " + validationException.getMessage();
+                        rCode = 406;
                     }
                     break;
 
