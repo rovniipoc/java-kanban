@@ -111,7 +111,6 @@ public class HttpTaskServer {
                 case "POST":
                     Task task = gson.fromJson(body, Task.class);
                     taskId = task.getId();
-
                     try {
                         manager.updateTask(task);
                         response = "Done: Задача с id = " + taskId + " обновлена.";
@@ -120,25 +119,16 @@ public class HttpTaskServer {
                         if (taskId != 0) {
                             response = "Not Found: Обновление задачи не выполнено: " + notFoundException.getMessage();
                             rCode = 404;
-                        } else if (task.getDuration() != null) {
-                            // у входящей задачи есть временной интервал
+                        } else {
                             // пытаемся добавить поступившую задачу как новую в менеджер
                             try {
-                                int newTaskId = manager.addNewTask(new Task(task.getName(), task.getDescription(),
-                                        task.getStatus(), task.getStartTime(), task.getDuration()));
+                                int newTaskId = manager.addNewTask(new Task(task));
                                 response = "Done: Новая задача с id = " + newTaskId + " добавлена.";
                                 rCode = 201;
                             } catch (TaskValidationException validationException) {
                                 response = "Not Acceptable: Добавление задачи не выполнено: " + validationException.getMessage();
                                 rCode = 406;
                             }
-                        } else {
-                            // у входящей задачи нет временного интервала,
-                            // добавляем поступившую задачу как новую в менеджер
-                            manager.addNewTask(new Task(task.getName(), task.getDescription(), task.getStatus(),
-                                    task.getStartTime(), task.getDuration()));
-                            response = "Done: Новая задача с id = " + taskId + " (без временного интервала) добавлена.";
-                            rCode = 201;
                         }
                     } catch (TaskValidationException validationException) {
                         response = "Not Acceptable: Обновление задачи не выполнено: " + validationException.getMessage();
@@ -149,9 +139,14 @@ public class HttpTaskServer {
                 case "DELETE":
                     if (pathParts.length == 3) {
                         taskId = Integer.parseInt(pathParts[2]);
-                        manager.deleteTaskById(taskId);
-                        rCode = 201;
-
+                        try {
+                            manager.deleteTaskById(taskId);
+                            response = "Done: Задача с id = " + taskId + " удалена.";
+                            rCode = 201;
+                        } catch (NotFoundException notFoundException) {
+                            response = "Not Found: Удаление задачи не выполнено: " + notFoundException.getMessage();
+                            rCode = 404;
+                        }
                     } else {
                         response = "Bad request";
                         rCode = 400;

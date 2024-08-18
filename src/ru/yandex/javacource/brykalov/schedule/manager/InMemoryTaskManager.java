@@ -115,6 +115,7 @@ public class InMemoryTaskManager implements TaskManager {
         // Проверяем не пересекается ли по времени задача с другой задачей или подзадачей.
         // Если пересекается, то выкидываем исключение.
         taskValidate(task);
+
         // Проверяем имеет ли задача временной интервал.
         // Если да, то добавляем в коллекцию задач, отсортированных по приоритету.
         if (task.getStartTime() != null) {
@@ -164,12 +165,12 @@ public class InMemoryTaskManager implements TaskManager {
     @Override
     public void updateTask(Task task) throws NotFoundException, TaskValidationException {
         int id = task.getId();
-        Task savedTask = tasks.get(id);
-
+        // Проверяем есть ли такая задача в хранилище, если нет, то выкидываем исключение
         if (!tasks.containsKey(id)) {
             throw new NotFoundException("Задача с id = " + id + " не найдена.");
         }
 
+        Task savedTask = tasks.get(id);
         // Проверяем не пересекается ли по времени задача с другой задачей или подзадачей.
         // Если пересекается, то выкидываем исключение. Предварительно удаляем из prioritizedTasks
         // старый экземпляр
@@ -221,11 +222,13 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     @Override
-    public void deleteTaskById(int id) {
-        Task task = tasks.remove(id);
-        if (task == null) {
-            return;
+    public void deleteTaskById(int id) throws NotFoundException {
+        // Проверяем есть ли такая задача в хранилище, если нет, то выкидываем исключение
+        if (!tasks.containsKey(id)) {
+            throw new NotFoundException("Задача с id = " + id + " не найдена.");
         }
+
+        Task task = tasks.remove(id);
         historyManager.remove(id);
         prioritizedTasks.remove(task);
     }

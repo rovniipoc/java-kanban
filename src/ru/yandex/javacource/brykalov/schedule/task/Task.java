@@ -29,6 +29,15 @@ public class Task {
         this.duration = duration;
     }
 
+    public Task(Task task) {
+        this.type = TaskType.TASK;
+        this.name = task.getName();
+        this.description = task.getDescription();
+        this.status = task.getStatus();
+        this.startTime = task.getStartTime();
+        this.duration = task.getDuration();
+    }
+
     public TaskType getType() {
         return type;
     }
