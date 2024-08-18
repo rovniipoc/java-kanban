@@ -183,8 +183,6 @@ public class HttpTaskServer {
                 os.write(response.getBytes(StandardCharsets.UTF_8));
             }
             exchange.close();
-
-            //TODO написать метод writeResponse()
         }
     }
 
