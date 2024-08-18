@@ -6,6 +6,7 @@ import com.google.gson.stream.JsonWriter;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
+import ru.yandex.javacource.brykalov.schedule.task.Epic;
 import ru.yandex.javacource.brykalov.schedule.task.Status;
 import ru.yandex.javacource.brykalov.schedule.task.Subtask;
 import ru.yandex.javacource.brykalov.schedule.task.Task;
@@ -38,7 +39,7 @@ public class HttpTaskServer {
         HttpServer httpServer = HttpServer.create(new InetSocketAddress(PORT), 0);
         httpServer.createContext("/tasks", new tasksHandler());
         httpServer.createContext("/subtasks", new subtasksHandler());
-//        httpServer.createContext("/epics", new epicsHandler());
+        httpServer.createContext("/epics", new epicsHandler());
         httpServer.createContext("/history", new historyHandler());
         httpServer.createContext("/prioritized", new prioritizedHandler());
 
@@ -262,10 +263,99 @@ public class HttpTaskServer {
         }
     }
 
-    class epicsHandler implements HttpHandler {
+    static class epicsHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
+            String method = exchange.getRequestMethod();
+            URI requestURI = exchange.getRequestURI();
+            String path = requestURI.getPath();
+            String[] pathParts = path.split("/");
+            InputStream inputStream = exchange.getRequestBody();
+            String body = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+            String response = "";
+            int rCode = 0;
+            int epicId;
 
+            switch (method) {
+                case "GET":
+                    if (pathParts.length == 4 && pathParts[3].equals("subtasks")) {
+                        epicId = Integer.parseInt(pathParts[2]);
+                        try {
+                            Epic epic = manager.getEpic(epicId);
+                            List<Integer> subtasks = epic.getSubtaskIds();
+                            response = "Подзадачи эпика с id = " + epicId + ": " + subtasks;
+                            rCode = 201;
+                        } catch (NotFoundException e) {
+                            response = "Not Found:" + e.getMessage();
+                            rCode = 404;
+                        }
+                    } else if (pathParts.length == 3) {
+                        epicId = Integer.parseInt(pathParts[2]);
+                        try {
+                            Epic epic = manager.getEpic(epicId);
+                            response = gson.toJson(epic);
+                            rCode = 200;
+                        } catch (NotFoundException e) {
+                            response = "Not Found:" + e.getMessage();
+                            rCode = 404;
+                        }
+                    } else if (pathParts.length == 2) {
+                        List<Epic> epics = manager.getEpicList();
+                        response = gson.toJson(epics);
+                        rCode = 200;
+                    } else {
+                        response = "Bad request";
+                        rCode = 400;
+                    }
+                    break;
+
+                case "POST":
+                    Epic epic = gson.fromJson(body, Epic.class);
+                    epicId = epic.getId();
+                    try {
+                        manager.updateEpic(epic);
+                        response = "Done: Эпик с id = " + epicId + " обновлен.";
+                        rCode = 201;
+                    } catch (NotFoundException notFoundException) {
+                        if (epicId != 0) {
+                            response = "Not Found: Обновление подзадачи не выполнено: " + notFoundException.getMessage();
+                            rCode = 404;
+                        } else {
+                            // пытаемся добавить поступивший эпик как новый в менеджер
+                            int newEpicId = manager.addNewEpic(new Epic(epic));
+                            response = "Done: Новый эпик с id = " + newEpicId + " добавлен.";
+                            rCode = 201;
+                        }
+                    }
+                    break;
+
+                case "DELETE":
+                    if (pathParts.length == 3) {
+                        epicId = Integer.parseInt(pathParts[2]);
+                        try {
+                            manager.deleteEpicById(epicId);
+                            response = "Done: Эпик с id = " + epicId + " удален.";
+                            rCode = 201;
+                        } catch (NotFoundException notFoundException) {
+                            response = "Not Found: Удаление эпика не выполнено: " + notFoundException.getMessage();
+                            rCode = 404;
+                        }
+                    } else {
+                        response = "Bad request";
+                        rCode = 400;
+                    }
+                    break;
+
+                default:
+                    response = "Bad request";
+                    rCode = 400;
+            }
+
+            try (OutputStream os = exchange.getResponseBody()) {
+                exchange.sendResponseHeaders(rCode, 0);
+                os.write(response.getBytes(StandardCharsets.UTF_8));
+            }
+            exchange.close();
         }
     }
 
