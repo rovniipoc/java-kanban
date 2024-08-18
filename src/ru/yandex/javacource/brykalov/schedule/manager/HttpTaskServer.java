@@ -7,6 +7,7 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 import ru.yandex.javacource.brykalov.schedule.task.Status;
+import ru.yandex.javacource.brykalov.schedule.task.Subtask;
 import ru.yandex.javacource.brykalov.schedule.task.Task;
 
 import java.io.File;
@@ -36,7 +37,7 @@ public class HttpTaskServer {
     public static void main(String[] args) throws IOException {
         HttpServer httpServer = HttpServer.create(new InetSocketAddress(PORT), 0);
         httpServer.createContext("/tasks", new tasksHandler());
-//        httpServer.createContext("/subtasks", new subtasksHandler());
+        httpServer.createContext("/subtasks", new subtasksHandler());
 //        httpServer.createContext("/epics", new epicsHandler());
 //        httpServer.createContext("/history", new historyHandler());
         httpServer.createContext("/prioritized", new prioritizedHandler());
@@ -168,11 +169,96 @@ public class HttpTaskServer {
         }
     }
 
-
-    class subtasksHandler implements HttpHandler {
+    static class subtasksHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
+            String method = exchange.getRequestMethod();
+            URI requestURI = exchange.getRequestURI();
+            String path = requestURI.getPath();
+            String[] pathParts = path.split("/");
+            InputStream inputStream = exchange.getRequestBody();
+            String body = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+            String response = "";
+            int rCode = 0;
+            int subtaskId;
 
+            switch (method) {
+                case "GET":
+                    if (pathParts.length == 3) {
+                        subtaskId = Integer.parseInt(pathParts[2]);
+                        try {
+                            Subtask subtask = manager.getSubtask(subtaskId);
+                            response = gson.toJson(subtask);
+                            rCode = 200;
+                        } catch (NotFoundException e) {
+                            response = "Not Found:" + e.getMessage();
+                            rCode = 404;
+                        }
+                    } else if (pathParts.length == 2) {
+                        List<Subtask> subtasks = manager.getSubtaskList();
+                        response = gson.toJson(subtasks);
+                        rCode = 200;
+                    } else {
+                        response = "Bad request";
+                        rCode = 400;
+                    }
+                    break;
+
+                case "POST":
+                    Subtask subtask = gson.fromJson(body, Subtask.class);
+                    subtaskId = subtask.getId();
+                    try {
+                        manager.updateSubtask(subtask);
+                        response = "Done: Подзадача с id = " + subtaskId + " обновлена.";
+                        rCode = 201;
+                    } catch (NotFoundException notFoundException) {
+                        if (subtaskId != 0) {
+                            response = "Not Found: Обновление подзадачи не выполнено: " + notFoundException.getMessage();
+                            rCode = 404;
+                        } else {
+                            // пытаемся добавить поступившую подзадачу как новую в менеджер
+                            try {
+                                int newSubtaskId = manager.addNewSubtask(new Subtask(subtask));
+                                response = "Done: Новая задача с id = " + newSubtaskId + " добавлена.";
+                                rCode = 201;
+                            } catch (TaskValidationException validationException) {
+                                response = "Not Acceptable: Добавление подзадачи не выполнено: " + validationException.getMessage();
+                                rCode = 406;
+                            }
+                        }
+                    } catch (TaskValidationException validationException) {
+                        response = "Not Acceptable: Обновление подзадачи не выполнено: " + validationException.getMessage();
+                        rCode = 406;
+                    }
+                    break;
+
+                case "DELETE":
+                    if (pathParts.length == 3) {
+                        subtaskId = Integer.parseInt(pathParts[2]);
+                        try {
+                            manager.deleteSubtaskById(subtaskId);
+                            response = "Done: Подзадача с id = " + subtaskId + " удалена.";
+                            rCode = 201;
+                        } catch (NotFoundException notFoundException) {
+                            response = "Not Found: Удаление подзадачи не выполнено: " + notFoundException.getMessage();
+                            rCode = 404;
+                        }
+                    } else {
+                        response = "Bad request";
+                        rCode = 400;
+                    }
+                    break;
+
+                default:
+                    response = "Bad request";
+                    rCode = 400;
+            }
+
+            try (OutputStream os = exchange.getResponseBody()) {
+                exchange.sendResponseHeaders(rCode, 0);
+                os.write(response.getBytes(StandardCharsets.UTF_8));
+            }
+            exchange.close();
         }
     }
 

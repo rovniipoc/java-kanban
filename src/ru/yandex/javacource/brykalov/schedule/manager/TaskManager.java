@@ -23,9 +23,9 @@ interface TaskManager {
 
     Task getTask(int id);
 
-    Task getEpic(int id);
+    Epic getEpic(int id);
 
-    Task getSubtask(int id);
+    Subtask getSubtask(int id);
 
     int addNewTask(Task task);
 
