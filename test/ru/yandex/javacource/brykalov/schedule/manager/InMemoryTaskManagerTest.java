@@ -167,9 +167,8 @@ public class InMemoryTaskManagerTest {
         int subtaskId1 = inMemoryTaskManager.addNewSubtask(subtask1);
 
         Subtask subtask2 = new Subtask("Подзадача2", "Описание подзадачи2", subtaskId1, Status.NEW);
-        Integer subtaskId2 = inMemoryTaskManager.addNewSubtask(subtask2);
-
-        assertNull(subtaskId2, "Для поздадачи другая подзадача не может служить эпиком");
+        
+        Assertions.assertThrows(TaskValidationException.class, () -> inMemoryTaskManager.addNewSubtask(subtask2));
     }
 
     @Test

@@ -17,6 +17,11 @@ public class Epic extends Task {
         this.status = Status.NEW;
     }
 
+    public Epic(Epic epic) {
+        super(epic.getName(), epic.getDescription(), Status.NEW);
+        this.type = TaskType.EPIC;
+    }
+
     public void addSubtaskId(Integer subtaskId) {
         if (subtaskIds.contains(subtaskId)) {
             return;
